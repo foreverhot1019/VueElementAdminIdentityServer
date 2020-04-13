@@ -1,0 +1,4 @@
+> 1%
+last 2 versions
+# Babel 编译成支持ie-10 的语法，需要设置vue.config - transpileDependencies node_modules里的包转译
+# not ie <= 10
