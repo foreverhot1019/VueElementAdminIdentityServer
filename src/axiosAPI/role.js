@@ -2,7 +2,7 @@
 
 export function getRoutes (data) {
   return request({
-    url: '/role/routes',
+    url: '/api/role/routes',
     method: 'post',
     data: data
   })
@@ -25,7 +25,7 @@ export function addRole (data) {
 
 export function updateRole (id, data) {
   return request({
-    url: `/api/${id}`,
+    url: `/api/role/${id}`,
     method: 'put',
     data
   })
@@ -33,7 +33,7 @@ export function updateRole (id, data) {
 
 export function deleteRole (id) {
   return request({
-    url: `/api/${id}`,
+    url: `/api/role/${id}`,
     method: 'delete'
   })
 }

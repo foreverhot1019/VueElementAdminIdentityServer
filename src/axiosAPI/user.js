@@ -3,14 +3,14 @@
 export function login (data) {
   var Mydata = {
     ...data,
-    client_id: 'Michael', // 必须是某个字段
-    client_secret: 'Michael', // 必须是某个字段
-    // UserName: 'Michael', // 可自定义
+    client_id: 'ManageIdsClient', // 必须是某个字段
+    client_secret: 'ManageIdsClientSecret', // 必须是某个字段
     grant_type: 'password', // 必须是password/client_credentials
-    response_type: 'token' // 必须是token
+    response_type: 'token', // 必须是token
+    scope: 'ManageIdsClient openid' // 范围openid必须有
   }
   return request({
-    url: '/token',
+    url: '/connect/token',
     method: 'post',
     data: Mydata
   })
@@ -18,9 +18,8 @@ export function login (data) {
 
 export function getInfo (token) {
   return request({
-    url: '/user/info',
-    method: 'get',
-    params: { token }
+    url: 'connect/userinfo',
+    method: 'get'
   })
 }
 

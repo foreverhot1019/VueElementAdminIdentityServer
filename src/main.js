@@ -17,7 +17,7 @@ import router from './router'
 
 import i18n from './lang' // internationalization
 import './icons' // icon
-import './permission' // permission control È¨ÏÞÈÏÖ¤Ä£¿é Í¨¹ýrouter-beforeEach ¹³×ÓÊµÏÖ
+import './permission' // permission control È¨ï¿½ï¿½ï¿½ï¿½Ö¤Ä£ï¿½ï¿½ Í¨ï¿½ï¿½router-beforeEach ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
 import './utils/error-log' // error log
 
 import * as filters from './filters' // global filters
@@ -48,7 +48,7 @@ Object.keys(filters).forEach(key => {
 
 Vue.config.productionTip = false
 
-new Vue({
+var _vue = new Vue({
   el: '#app',
   router,
   store,

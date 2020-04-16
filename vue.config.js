@@ -47,7 +47,7 @@ module.exports = {
     // 代理
     proxy: {
       '/api': {
-        target: `http://localhost:17649`, // 设置你调用的接口域名和端口号
+        target: `https://michaelidssrv.com:44365`, // 设置你调用的接口域名和端口号
         ws: true,
         changeOrigin: true, // 跨域
         secure: false, // https
@@ -56,7 +56,7 @@ module.exports = {
         }
       },
       '/dev-api': {
-        target: `http://localhost:17649`,
+        target: `https://michaelidssrv.com:44365`,
         changeOrigin: true,
         pathRewrite: {
           '^/dev-api': ''

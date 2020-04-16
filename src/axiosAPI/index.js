@@ -3,15 +3,16 @@ import axios from 'axios'
 export const TestPost = (userName) => {
   userName = (userName === 'undefined' || userName == null || userName == '') ? 'admin' : userName // eslint-disable-line
   var p = new Promise((resolve, reject) => {
-    axios.post('/Account/changeOp', JSON.stringify({ userName: userName })).then(
-      res => res.Json()).then(
-      data => {
-        resolve(data)
-      }).catch(
-      err => {
-        console.log(err)
-        reject(err)
-      })
+    resolve({ a: '123', b: '345' })
+    // axios.post('/Account/changeOp', JSON.stringify({ userName: userName })).then(
+    //   res => res.Json()).then(
+    //   data => {
+    //     resolve(data)
+    //   }).catch(
+    //   err => {
+    //     console.log(err)
+    //     reject(err)
+    //   })
   })
   return p
 }

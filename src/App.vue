@@ -4,15 +4,14 @@
   </div>
 </template>
 <script>
-
-  export default {
-    name: 'app',
-    data() {
-      return {
-        NavWidth: '200px'
-      }
+export default {
+  name: 'app',
+  data () {
+    return {
+      NavWidth: '200px'
     }
   }
+}
 </script>
 
 <!-- Element-UI支持font-awesome图标 less模式 -->

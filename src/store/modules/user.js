@@ -11,7 +11,7 @@ const state = {
   avatar: '',
   introduction: '',
   roles: [],
-  menus: [] // 用户菜单
+  menus: [] // 鐢ㄦ埛鑿滃崟
 }
 
 const mutations = {
@@ -63,9 +63,11 @@ const actions = {
         if (!data) {
           reject('Verification failed, please Login again.')
         }
-
+        data.roles = data.role
+        data.introduction = 'I am a super administrator'
+        data.avatar = 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif'
         const { roles, name, avatar, introduction } = data
-
+        // roles = data.role
         // roles must be a non-empty array
         if (!roles || roles.length <= 0) {
           reject('getInfo: roles must be a non-null array!')
@@ -86,7 +88,7 @@ const actions = {
     return new Promise((resolve, reject) => {
       let userName = state.name
       if (utils.objIsEmpty(userName)) {
-        reject('用户数据不能为空')
+        reject('鐢ㄦ埛鏁版嵁涓嶈兘涓虹┖')
       }
       getRoutes({ userName: userName }).then(res => {
         let data = res
@@ -100,16 +102,22 @@ const actions = {
   // user logout
   logout ({ commit, state, dispatch }) {
     return new Promise((resolve, reject) => {
-      logout(state.token).then(() => {
-        commit('SET_TOKEN', '')
-        commit('SET_ROLES', [])
-        removeToken()
-        dispatch('permission/setAsyncRoutes', [], { root: true }) // 设置异步菜单为空
-        resetRouter()
-        resolve()
-      }).catch(error => {
-        reject(error)
-      })
+      commit('SET_TOKEN', '')
+      commit('SET_ROLES', [])
+      removeToken()
+      dispatch('permission/setAsyncRoutes', [], { root: true }) // 璁剧疆寮傛鑿滃崟涓虹┖
+      resetRouter()
+      resolve()
+      // logout(state.token).then(() => {
+      //   commit('SET_TOKEN', '')
+      //   commit('SET_ROLES', [])
+      //   removeToken()
+      //   dispatch('permission/setAsyncRoutes', [], { root: true }) // 璁剧疆寮傛鑿滃崟涓虹┖
+      //   resetRouter()
+      //   resolve()
+      // }).catch(error => {
+      //   reject(error)
+      // })
     })
   },
   // remove token
@@ -118,7 +126,7 @@ const actions = {
       commit('SET_TOKEN', '')
       commit('SET_ROLES', [])
       removeToken()
-      dispatch('permission/setAsyncRoutes', [], { root: true }) // 设置异步菜单为空
+      dispatch('permission/setAsyncRoutes', [], { root: true }) // 璁剧疆寮傛鑿滃崟涓虹┖
       resolve()
     })
   },

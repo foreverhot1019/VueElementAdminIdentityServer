@@ -1,7 +1,6 @@
 <template>
   <div class="login-container">
     <el-form ref="loginForm" :model="loginForm" :rules="loginRules" class="login-form" autocomplete="on" label-position="left">
-
       <div class="title-container">
         <h3 class="title">
           {{ $t('login.title') }}
@@ -52,7 +51,7 @@
         {{ $t('login.logIn') }}
       </el-button>
 
-      <div style="position:relative">
+      <!--<div style="position:relative">
         <div class="tips">
           <span>{{ $t('login.username') }} : admin</span>
           <span>{{ $t('login.password') }} : {{ $t('login.any') }}</span>
@@ -63,11 +62,10 @@
           </span>
           <span>{{ $t('login.password') }} : {{ $t('login.any') }}</span>
         </div>
-
         <el-button class="thirdparty-button" type="primary" @click="showDialog=true">
           {{ $t('login.thirdparty') }}
         </el-button>
-      </div>
+      </div>-->
     </el-form>
 
     <el-dialog :title="$t('login.thirdparty')" :visible.sync="showDialog">
@@ -88,7 +86,7 @@ import SocialSign from './components/SocialSignin'
 export default {
   name: 'Login',
   components: { LangSelect, SocialSign },
-  data() {
+  data () {
     const validateUsername = (rule, value, callback) => {
       if (!validUsername(value)) {
         callback(new Error('Please enter the correct user name'))
@@ -105,8 +103,8 @@ export default {
     }
     return {
       loginForm: {
-        username: 'admin',
-        password: '111111'
+        username: 'admin@admin.com',
+        password: '~Ww19871019'
       },
       loginRules: {
         username: [{ required: true, trigger: 'blur', validator: validateUsername }],
@@ -122,7 +120,7 @@ export default {
   },
   watch: {
     $route: {
-      handler: function(route) {
+      handler: function (route) {
         const query = route.query
         if (query) {
           this.redirect = query.redirect
@@ -132,23 +130,23 @@ export default {
       immediate: true
     }
   },
-  created() {
+  created () {
     // window.addEventListener('storage', this.afterQRScan)
   },
-  mounted() {
+  mounted () {
     if (this.loginForm.username === '') {
       this.$refs.username.focus()
     } else if (this.loginForm.password === '') {
       this.$refs.password.focus()
     }
   },
-  destroyed() {
+  destroyed () {
     // window.removeEventListener('storage', this.afterQRScan)
   },
   methods: {
-    checkCapslock({ shiftKey, key } = {}) {
+    checkCapslock ({ shiftKey, key } = {}) {
       if (key && key.length === 1) {
-        if (shiftKey && (key >= 'a' && key <= 'z') || !shiftKey && (key >= 'A' && key <= 'Z')) {
+        if (shiftKey & (key >= 'a' && key <= 'z') | !shiftKey && (key >= 'A' && key <= 'Z')) {
           this.capsTooltip = true
         } else {
           this.capsTooltip = false
@@ -158,7 +156,7 @@ export default {
         this.capsTooltip = false
       }
     },
-    showPwd() {
+    showPwd () {
       if (this.passwordType === 'password') {
         this.passwordType = ''
       } else {
@@ -168,7 +166,7 @@ export default {
         this.$refs.password.focus()
       })
     },
-    handleLogin() {
+    handleLogin () {
       this.$refs.loginForm.validate(valid => {
         if (valid) {
           this.loading = true
@@ -187,7 +185,7 @@ export default {
         }
       })
     },
-    getOtherQuery(query) {
+    getOtherQuery (query) {
       return Object.keys(query).reduce((acc, cur) => {
         if (cur !== 'redirect') {
           acc[cur] = query[cur]

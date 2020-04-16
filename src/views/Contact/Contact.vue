@@ -16,7 +16,8 @@ export default {
   data () {
     return {
       page: 'Contact',
-      publicPath: `${process.env.BASE_URL}/src/assets`
+      publicPath: `${process.env.BASE_URL}/src/assets`,
+      axiosAPITestPostData: {}
     }
   },
   components: {
@@ -26,7 +27,8 @@ export default {
     console.log(axiosAPI)
     var thisVue = this
     axiosAPI.TestPost('admin').then(data => {
-      thisVue.set('axiosAPITestPostData', data)
+      console.log(data)
+      thisVue.axiosAPITestPostData = data
     }, err => {
       console.log(thisVue.page, err)
     })

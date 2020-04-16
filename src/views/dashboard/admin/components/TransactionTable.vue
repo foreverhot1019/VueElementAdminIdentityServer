@@ -46,10 +46,15 @@ export default {
   },
   methods: {
     fetchData () {
-      transactionList().then(response => {
-        console.log('fetchData', response)
-        const { data } = response
-        this.list = data.items.slice(0, 8)
+      return new Promise((resolve, reject) => {
+        transactionList().then(response => {
+          console.log('fetchData', response)
+          const { data } = response
+          this.list = data.items.slice(0, 8)
+          resolve(true)
+        }).catch(error => {
+          reject(error)
+        })
       })
     }
   }

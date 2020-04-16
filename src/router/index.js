@@ -123,14 +123,14 @@ export const constantRoutes = [
   }
 ]
 /**
- *Ϊ�첽·���������ҳ��
+ *获取菜单
  */
 export const menus = {
   Layout: Layout,
   Home: () => import('@/views/Home/Home'),
   About: () => import('@/views/About/About'),
   Contact: () => import('@/views/Contact/Contact'),
-  MyTest: () => import('@/views/MyTest')
+  MyTest: () => import('@/views/MyTest/MyTest')
 }
 /**
  * asyncRoutes

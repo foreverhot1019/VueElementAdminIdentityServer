@@ -81,16 +81,16 @@ export default {
         width: '40px',
         height: '40px',
         'border-radius': '4px',
-        'line-height': '45px', // Çë±£³ÖÓë¸ß¶ÈÒ»ÖÂÒÔ´¹Ö±¾ÓÖÐ Please keep consistent with height to center vertically
-        background: '#e7eaf1'// °´Å¥µÄ±³¾°ÑÕÉ« The background color of the button
+        'line-height': '45px', // ï¿½ë±£ï¿½ï¿½ï¿½ï¿½ß¶ï¿½Ò»ï¿½ï¿½ï¿½Ô´ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ Please keep consistent with height to center vertically
+        background: '#e7eaf1'// ï¿½ï¿½Å¥ï¿½Ä±ï¿½ï¿½ï¿½ï¿½ï¿½É« The background color of the button
       }
     }
   },
   methods: {
-    toggleSideBar() {
+    toggleSideBar () {
       this.$store.dispatch('app/toggleSideBar')
     },
-    async logout() {
+    async logout () {
       await this.$store.dispatch('user/logout')
       this.$router.push(`/login?redirect=${this.$route.fullPath}`)
     }

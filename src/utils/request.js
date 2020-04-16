@@ -5,7 +5,7 @@ import { getToken } from '@/utils/auth'
 import qs from 'querystring'
 
 const asiosTimeOut = 600000 // request timeout-ms
-// �������е�����Ҫ��2.5S֮��Żᷢ��
+// 默认超时时间（毫秒）
 axios.defaults.timeout = asiosTimeOut
 
 // create an axios instance
@@ -30,7 +30,7 @@ service.interceptors.request.use(
       // let each request carry token
       // ['X-Token'] is a custom headers key
       // please modify it according to the actual situation
-      config.headers['Authorization'] = `bearer ${getToken()}`
+      config.headers['Authorization'] = `Bearer ${getToken()}`
     }
     return config
   },
