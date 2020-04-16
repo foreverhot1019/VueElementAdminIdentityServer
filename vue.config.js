@@ -96,6 +96,7 @@ module.exports = {
       config.plugins = [...config.plugins, ...plugins]
     } else { // 为开发环境修改配置...
       config.mode = 'development'
+      config.devtool = 'source-map'
     }
     // 添加 loader
     // config.module.rules.push({
