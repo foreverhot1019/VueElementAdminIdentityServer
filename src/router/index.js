@@ -130,7 +130,9 @@ export const menus = {
   Home: () => import('@/views/Home/Home'),
   About: () => import('@/views/About/About'),
   Contact: () => import('@/views/Contact/Contact'),
-  MyTest: () => import('@/views/MyTest/MyTest')
+  MyTest: () => import('@/views/MyTest/MyTest'),
+  UserManage: () => import('@/views/UserManage/User')
+  // IdsClient: () => import('@/views/MyTest/IdsClient')
 }
 /**
  * asyncRoutes

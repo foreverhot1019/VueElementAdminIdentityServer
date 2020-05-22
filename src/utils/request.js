@@ -23,7 +23,14 @@ service.interceptors.request.use(
   config => {
     // do something before request is sent
     if (config.method === 'post') {
-      config.data = qs.stringify(config.data)
+      // if (config.headers['Content-Type'] ==='application/json') {
+      //   config.body = qs.stringify(config.data)
+      // } else {
+      //   config.data = qs.stringify(config.data)
+      // }
+      if (config.headers['Content-Type'].indexOf('application/json') < 0) {
+        config.data = qs.stringify(config.data)
+      }
     }
 
     if (store.getters.token) {
@@ -46,9 +53,7 @@ service.interceptors.response.use(
   /**
    * If you want to get http information such as headers or status
    * Please return  response => response
-  */
-
-  /**
+   *
    * Determine the request status by custom code
    * Here is just an example
    * You can also judge the status by HTTP Status Code
@@ -60,7 +65,7 @@ service.interceptors.response.use(
     // if the custom code is not 20000, it is judged as an error.
     if (code !== 200 && code !== 20000) {
       Message({
-        message: res.message || 'Error',
+        message: res.message || res.ErrMsg || 'Error',
         type: 'error',
         duration: 5 * 1000
       })

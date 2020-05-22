@@ -85,7 +85,7 @@ const actions = {
   setAsyncRoutes ({ commit, state }, routes) {
     return new Promise((resolve, reject) => {
       if (!objIsEmpty(state.asyncRoutes)) {
-        let err = '异步菜单已经存在无法修改'
+        let err = { message: '异步菜单已经存在无法修改' }
         reject(err)
       }
       routes.forEach((item, index, arr) => {

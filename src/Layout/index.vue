@@ -27,7 +27,7 @@
 import RightPanel from '@/components/RightPanel'
 import { AppMain, Navbar, Settings, Sidebar, TagsView } from './components'
 import ResizeMixin from './mixin/ResizeHandler'
-import { mapState, createNamespacedHelpers } from 'vuex'
+import { createNamespacedHelpers } from 'vuex'
 import BackToTop from '@/components/BackToTop'
 // 直接通过createNamespacedHelpers从指定module 导出 mapState mapGetters mapMutations mapActions
 const app = createNamespacedHelpers('app')

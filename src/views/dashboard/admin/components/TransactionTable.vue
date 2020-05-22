@@ -53,6 +53,7 @@ export default {
           this.list = data.items.slice(0, 8)
           resolve(true)
         }).catch(error => {
+          // let errMsg = { message: error }
           reject(error)
         })
       })

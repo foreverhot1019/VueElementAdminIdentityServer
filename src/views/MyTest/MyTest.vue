@@ -11,13 +11,17 @@ import { mapGetters, mapActions, mapMutations } from 'vuex'
 // import upload from '@/componets/Upload'
 let MyTest = {
   name: 'MyTest',
-  computed () {
-    return {
-      ...mapGetters
-    }
+  computed: {
+    ...mapGetters
   },
   components: {
     Logo: () => import('components/Logo')
+  },
+  data () {
+    return {
+      ...mapGetters,
+      page: 'MyTestVuex'
+    }
   },
   methods: {
     ...mapMutations(['setHelloWorldMsg']),

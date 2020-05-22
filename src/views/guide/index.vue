@@ -17,16 +17,16 @@ import steps from './steps'
 
 export default {
   name: 'Guide',
-  data() {
+  data () {
     return {
       driver: null
     }
   },
-  mounted() {
+  mounted () {
     this.driver = new Driver()
   },
   methods: {
-    guide() {
+    guide () {
       this.driver.defineSteps(steps)
       this.driver.start()
     }
