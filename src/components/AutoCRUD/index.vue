@@ -196,7 +196,7 @@ let { cRUDMixin, BaseArrField, CustomerFields } = MycRUDMixin
 // BaseApi.SetController('AccountManage')
 // 枚举类型字段
 export default {
-  name: 'AutoCRUD',
+  name: 'AutoCRUD', // 页面名称（当组件引用时用到）
   props: {
     ControllerName: { // 控制器名称
       type: String,
@@ -224,6 +224,6 @@ export default {
     // 设置控制器
     BaseApi.SetController(ControllerName)
   }, // 渲染dom前触发
-  mixins: [cRUDMixin]
+  mixins: [cRUDMixin] // 混入
 }
 </script>

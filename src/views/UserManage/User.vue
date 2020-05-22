@@ -4,12 +4,12 @@
     </div>
 </template>
 <script>
-import AutoCRUD from '@/components/AutoCRUD'
+import AutoCRUD from '@/components/AutoCRUD' // AutoCRUD组件
 
 // 枚举类型字段
 export default {
-  name: 'UserManage',
-  components: { AutoCRUD },
+  name: 'UserManage', // 页面名称（当组件引用时用到）
+  components: { AutoCRUD }, // AutoCRUD组件
   data () {
     // 渲染CRUD字段数据集
     let SetArrField = [
@@ -28,7 +28,7 @@ export default {
     ]
     return {
       Fields: SetArrField,
-      controllerName: 'AccountManage' // CRUD 控制器
+      controllerName: 'AccountManage' // CRUD控制器
     }
   }
 }
