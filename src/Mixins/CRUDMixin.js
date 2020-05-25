@@ -3,7 +3,7 @@ import BaseApi from '@/axiosAPI/BaseApi'
 import moment from 'moment'
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
-var CustomerFields = {
+let CustomerFields = {
   // "Currency":{
   //    DisplayName: "授权币制",//显示名称
   //    Editable: true, //可编辑
@@ -28,17 +28,20 @@ var CustomerFields = {
   //    inputType: "text", //"password/datetime/text";//form中的input类型
   // }
 }
-var ArrFormField = [] // 记录所有编辑字段
-var ArrListField = [] // 记录所有字段
-var ArrSearchField = [] // 记录所有搜索字段
+let ArrFormField = [] // 记录所有编辑字段
+let ArrListField = [] // 记录所有字段
+let ArrSearchField = [] // 记录所有搜索字段
 // 枚举类型字段
-var BaseArrField = {
+let BaseArrField = {
   IsFormOrder: false, // 添加/编辑字段 排序
   IsListOrder: false, // 列表字段 排序
   IsSearchOrder: false, // 搜索字段 排序
   ArrField: [], // 所有字段
   get GetArrField () {}, // 获取值 处理
   set SetArrField (value) { // 设置值 处理
+    ArrFormField.splice(0, ArrFormField.length) // 记录所有编辑字段
+    ArrListField.splice(0, ArrListField.length) // 记录所有字段
+    ArrSearchField.splice(0, ArrSearchField.length) // 记录所有搜索字段
     this.ArrField = value
     if (!objIsEmpty(value)) {
       // 列表/编辑/搜索 字段集合
@@ -637,6 +640,7 @@ var cRUDMixin = {
           }
           let ArrMsg = [] // 记录保存返回数据
           batchSaveData.inserted.forEach((item, index) => {
+            item.Id = item.Id + ''
             BaseApi.Add(item).then(res => {
               if (res.Success) {
                 ArrMsg.push({ Success: true, ErrMsg: `Add_${index}` })

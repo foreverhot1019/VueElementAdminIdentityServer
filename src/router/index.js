@@ -131,7 +131,8 @@ export const menus = {
   About: () => import('@/views/About/About'),
   Contact: () => import('@/views/Contact/Contact'),
   MyTest: () => import('@/views/MyTest/MyTest'),
-  UserManage: () => import('@/views/UserManage/User')
+  UserManage: () => import('@/views/UserManage/User'),
+  Role: () => import('@/views/Role')
   // IdsClient: () => import('@/views/MyTest/IdsClient')
 }
 /**
