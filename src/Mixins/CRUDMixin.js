@@ -571,41 +571,6 @@ var cRUDMixin = {
           type: 'error'
         })
       })
-      // thisVue.$http.post(url, batchSaveData, {
-      //   headers: { // 指示为 ajax请求
-      //     'X-Requested-With': 'XMLHttpRequest'
-      //   }
-      // }).then(function (success) { // 成功
-      //   thisVue.tbLoading = false // 加载完毕
-      //   try {
-      //     var retData = success.body
-      //     if (retData.Success) {
-      //       thisVue.tb_GetData() // 删除数据后，重新获取数据
-      //     } else {
-      //       thisVue.$message({
-      //         duration: 0, // 不自动关闭
-      //         showClose: true,
-      //         message: '删除错误:' + retData.ErrMsg,
-      //         type: 'error'
-      //       })
-      //     }
-      //   } catch (e) {
-      //     thisVue.$message({
-      //       duration: 0, // 不自动关闭
-      //       showClose: true,
-      //       message: '删除数据处理，出现错误',
-      //       type: 'error'
-      //     })
-      //   }
-      // }, function (error) { // 错误
-      //   thisVue.tbLoading = false// 加载完毕
-      //   thisVue.$message({
-      //     duration: 0, // 不自动关闭
-      //     showClose: true,
-      //     message: `删除数据，出现错误${error}`,
-      //     type: 'error'
-      //   })
-      // })
     }, // 行删除按钮-删除行搜索条件
     handledelSeltRow: function (e) {
       // console.log('handledelSeltRow', e, this.selctRows)
@@ -617,10 +582,7 @@ var cRUDMixin = {
           type: 'error'
         })
       } else {
-        // var batchSaveData = {} // 批量操作数据
         var thisVue = this
-        // batchSaveData.deleted = thisVue.selctRows
-        // var url = thisVue.tbUrl.controller + thisVue.tbUrl.batchSave // 批量保存url
         thisVue.tbLoading = true // 加载中
         let ArrDelPromiseFunc = [] // 记录删除数据方法
         thisVue.selctRows.forEach(item => {
@@ -653,42 +615,6 @@ var cRUDMixin = {
             type: 'error'
           })
         })
-        // 提交数据
-        // thisVue.$http.post(url, batchSaveData, {
-        //   headers: { // 指示为 ajax请求
-        //     'X-Requested-With': 'XMLHttpRequest'
-        //   }
-        // }).then(function (success) { // 成功
-        //   thisVue.tbLoading = false // 加载完毕
-        //   try {
-        //     var retData = success.body
-        //     if (retData.Success) {
-        //       thisVue.tb_GetData() // 删除数据后，重新获取数据
-        //     } else {
-        //       thisVue.$message({
-        //         duration: 0, // 不自动关闭
-        //         showClose: true,
-        //         message: '删除错误:' + retData.ErrMsg,
-        //         type: 'error'
-        //       })
-        //     }
-        //   } catch (e) {
-        //     thisVue.$message({
-        //       duration: 0, // 不自动关闭
-        //       showClose: true,
-        //       message: '删除数据处理，出现错误',
-        //       type: 'error'
-        //     })
-        //   }
-        // }, function (error) { // 错误
-        //   thisVue.tbLoading = false // 加载完毕
-        //   thisVue.$message({
-        //     duration: 0, // 不自动关闭
-        //     showClose: true,
-        //     message: `删除数据，出现错误${error}`,
-        //     type: 'error'
-        //   })
-        // })
       }
       // rows.splice(index, 1)
     }, // 删除选中行数据
@@ -744,49 +670,25 @@ var cRUDMixin = {
       MyForm.validate(function (valid) {
         if (valid) {
           thisVue.dlgLoading = true// 弹出框加载中
-          // var url = thisVue.tbUrl.controller + thisVue.tbUrl.batchSave// 批量保存url
           var batchSaveData = { // 批量操作数据
             inserted: [],
             deleted: [],
             updated: []
           }
           let postData = thisVue.curr_rowdata
-          // if (thisVue.curr_rowdata.Id <= 0) {
-          //   postData = {}
-          //   Object.assign(postData, thisVue.curr_rowdata)
-          // }
           if (postData.Id <= 0) {
             batchSaveData.inserted.push(postData)
           } else {
             batchSaveData.updated.push(postData)
           }
-          // let ArrMsg = [] // 记录保存返回数据
           let ArrPromiseFunc = [] // 记录异步方法
           batchSaveData.inserted.forEach((item, index) => {
             item.Id = item.Id + ''
             let AddFunc = BaseApi.Add(item)
-            // .then(res => {
-            //   if (res.Success) {
-            //     ArrMsg.push({ Success: true, ErrMsg: `Add_${index}` })
-            //   } else {
-            //     ArrMsg.push({ Success: false, ErrMsg: `Add_${index}-Error:${res.ErrMsg}` })
-            //   }
-            // }).catch(err => {
-            //   ArrMsg.push({ Success: false, ErrMsg: `Add_${index}-Error:${err}` })
-            // })
             ArrPromiseFunc.push(AddFunc)
           })
           batchSaveData.updated.forEach((item, index) => {
             let EditFunc = BaseApi.Edit(item.Id, item)
-            // .then(res => {
-            //   if (res.Success) {
-            //     ArrMsg.push({ Success: true, ErrMsg: `Edit_${index}` })
-            //   } else {
-            //     ArrMsg.push({ Success: false, ErrMsg: `Edit_${index}-Error:${res.ErrMsg}` })
-            //   }
-            // }).catch(err => {
-            //   ArrMsg.push({ Success: false, ErrMsg: `Edit_${index}-Error:${err}` })
-            // })
             ArrPromiseFunc.push(EditFunc)
           })
           Promise.all(ArrPromiseFunc).then(ArrRes => {
