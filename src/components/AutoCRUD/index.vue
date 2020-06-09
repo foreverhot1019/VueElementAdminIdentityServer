@@ -67,7 +67,7 @@
                       v-on:row-dblclick="handledblclick"
                       v-on:selection-change="handleSelectionChange"
                       v-on:sort-change="tbSortChange">
-                <el-table-column fixed type="selection" width="39"></el-table-column>
+                <el-table-column type="selection" width="41"></el-table-column>
                 <template>
                     <el-table-column show-overflow-tooltip
                         v-for="field in ArrListField"
@@ -79,7 +79,7 @@
                         v-bind:formatter="formatter(field)">
                     </el-table-column>
                 </template>
-                <el-table-column fixed="right" label="操作" width="47" v-if="UserRoles.Delete">
+                <el-table-column fixed="right" label="操作" width="51" v-if="UserRoles.Delete">
                     <template slot-scope="sp">
                         <el-tooltip content="删除" placement="top" effect="light">
                             <el-button type="danger" size="mini" icon="el-icon-delete" circle v-bind:disabled="!UserRoles.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>

@@ -133,8 +133,9 @@ export const menus = {
   MyTest: () => import('@/views/MyTest/MyTest'),
   UserManage: () => import('@/views/UserManage/User'),
   Role: () => import('@/views/Role'),
-  IdsIdentityResource: () => import('@/views/IdsIdentityResource')
-  // IdsClient: () => import('@/views/MyTest/IdsClient')
+  IdsIdentityResource: () => import('@/views/IdsIdentityResource'),
+  IdsApiResource: () => import('@/views/IdsApiResource'),
+  IdsClient: () => import('@/views/IdsClient')
 }
 /**
  * asyncRoutes
