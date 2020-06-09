@@ -1,5 +1,5 @@
 <template>
-  <div id="div_CRUD" v-cloak>
+  <div id="div_CRUD">
     <!--搜索条件-->
     <!--工具条-->
     <el-row style="background-color: #eee; padding:10px 0px 0px 10px">
@@ -70,7 +70,7 @@
                 <el-table-column fixed type="selection" width="39"></el-table-column>
                 <template>
                     <el-table-column show-overflow-tooltip
-                        v-for="field in ArrListFields"
+                        v-for="field in ArrListField"
                         v-bind:key="field.Name"
                         v-bind:width="field.Width_List"
                         v-bind:sortable="field.Sortable?'custom':false"
@@ -120,18 +120,26 @@
                     v-bind:label="field.DisplayName"
                     v-bind:prop="field.Name"
                     v-bind:rules="el_FormFieldRules(field)">
-                <component v-if="!field.IsForeignKey && field.FormShow" v-bind:is="el_inputType(field)"
+                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
                            v-bind:disabled="field.IsKey || (!field.Editable&&curr_rowdata.Id>0)"
                            v-model="curr_rowdata[field.Name]"
                            v-bind:prop="field.Name"
                            v-bind:type="el_inputProtoType(field)"
                            v-bind:precision="field.Precision"
                            v-bind:clearable="true"
+                           v-bind:show-word-limit="(field.MaxLength||0)>0"
+                           v-bind:maxlength="field.MaxLength||50"
+                           v-bind:minlength="field.MinLength||50"
                            v-bind:style="{'width':field.Width_input+'px'}">
                     <i slot="suffix" class="el-input__icon fa"
                        v-show="field.Name.toLowerCase().indexOf('password')>=0"
                        v-on:click="pswView(field)"
                        v-bind:class="el_inputClass(field)"></i>
+                </component>
+                <component v-else-if="field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
+                           v-model="curr_rowdata[field.Name]"
+                           v-bind:style="{'width':field.Width_input+'px'}"
+                           v-bind:editable="field.Editable">
                 </component>
                 <el-select v-else v-model="curr_rowdata[field.Name]"
                            reserve-keyword clearable
@@ -153,12 +161,13 @@
             <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
         </span>
     </el-dialog>
-</div>
+  </div>
 </template>
 <script>
 import BaseApi from '@/axiosAPI/BaseApi'
 import MycRUDMixin from '@/Mixins/CRUDMixin'
 import { objIsEmpty } from '@/utils'
+import TagEdit from '@/components/TagEdit' // 标签编辑展示
 
 let { cRUDMixin, BaseArrField, CustomerFields } = MycRUDMixin
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
@@ -183,7 +192,7 @@ let { cRUDMixin, BaseArrField, CustomerFields } = MycRUDMixin
 //   Type: "string", //"datetime/number/string/boolean";//类型
 //   Width_List: "120", //列表-列宽度 <=0 默认*，>0 此宽度为准
 //   Width_input: "178", //Form-input宽度 <=0 默认*，>0 此宽度为准
-//   inputType: "text", //"password/datetime/text";//form中的input类型
+//   inputType: "text", //"password/datetime/text/tagedit";//form中的input类型
 // }
 // 初始化渲染字段数据
 // BaseArrField.IsFormOrder = false
@@ -211,11 +220,14 @@ export default {
       required: true
     }
   },
+  components: {
+    TagEdit // 标签编辑展示
+  },
   created: function () {
-    let { CustomerFields, Fields, ControllerName } = this
+    let { CustomerFields: propCustomerFields, Fields, ControllerName } = this
     // 设置自定义数据
-    if (!objIsEmpty(CustomerFields)) {
-      CustomerFields.entries().foreach((key, value) => {
+    if (!objIsEmpty(propCustomerFields)) {
+      propCustomerFields.entries().foreach((key, value) => {
         CustomerFields[key] = value
       })
     }

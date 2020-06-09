@@ -31,6 +31,7 @@ let CustomerFields = {
 let ArrFormField = [] // 记录所有编辑字段
 let ArrListField = [] // 记录所有字段
 let ArrSearchField = [] // 记录所有搜索字段
+let ArrTagEditField = [] // 记录所有数组字段
 // 枚举类型字段
 let BaseArrField = {
   IsFormOrder: false, // 添加/编辑字段 排序
@@ -42,7 +43,8 @@ let BaseArrField = {
     ArrFormField.splice(0, ArrFormField.length) // 记录所有编辑字段
     ArrListField.splice(0, ArrListField.length) // 记录所有字段
     ArrSearchField.splice(0, ArrSearchField.length) // 记录所有搜索字段
-    this.ArrField = value
+    ArrTagEditField.splice(0, ArrTagEditField.length) // 记录所有数组字段
+    BaseArrField.ArrField = value
     if (!objIsEmpty(value)) {
       // 列表/编辑/搜索 字段集合
       value.forEach((item, idx) => {
@@ -64,9 +66,12 @@ let BaseArrField = {
         if (item.SearchOrder > 0) {
           this.IsSearchOrder = true
         }
+        if (item.inputType === 'tagedit') {
+          ArrTagEditField.push(item)
+        }
       })
     }
-    if (this.IsFormOrder) {
+    if (BaseArrField.IsFormOrder) {
       ArrFormField = ArrFormField.sort((a, b) => {
         if (a.FormOrder === b.FormOrder) {
           return a.Name - b.Name
@@ -75,7 +80,7 @@ let BaseArrField = {
         }
       })
     }
-    if (this.IsListOrder) {
+    if (BaseArrField.IsListOrder) {
       ArrListField = ArrListField.sort((a, b) => {
         if (a.ListOrder === b.ListOrder) {
           return a.Name - b.Name
@@ -84,7 +89,7 @@ let BaseArrField = {
         }
       })
     }
-    if (this.IsSearchOrder) {
+    if (BaseArrField.IsSearchOrder) {
       ArrSearchField = ArrSearchField.sort((a, b) => {
         if (a.SearchOrder === b.SearchOrder) {
           return a.Name - b.Name
@@ -112,13 +117,51 @@ var cRUDMixin = {
   directives: {}, // 注册局部指令
   created: function () {
     let thisVue = this
-    thisVue.ArrEnumField = BaseArrField.ArrField.filter(function (val) {
+    thisVue.$set(thisVue, 'ArrFormField', [])
+    thisVue.$set(thisVue, 'ArrListField', [])
+    thisVue.$set(thisVue, 'ArrSearchField', [])
+    thisVue.$set(thisVue, 'ArrTagEditField', [])
+    let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
+    let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
+    let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+    let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
+
+    if (!objIsEmpty(thisVue.Fields)) {
+      // 列表/编辑/搜索 字段集合
+      thisVue.Fields.forEach((item, idx) => {
+        if (item.FormShow && !item.IsKey) {
+          ArrFormField.push(item)
+        }
+        if (item.FormOrder > 0) {
+          this.IsListOrder = true
+        }
+        if (item.ListShow && !item.IsKey) {
+          ArrListField.push(item)
+        }
+        if (item.IsListOrder > 0) {
+          this.IsListOrder = true
+        }
+        if (item.SearchShow && !item.IsKey) {
+          ArrSearchField.push(item)
+        }
+        if (item.SearchOrder > 0) {
+          this.IsSearchOrder = true
+        }
+        if (item.inputType === 'tagedit') {
+          ArrTagEditField.push(item)
+        }
+      })
+    }
+    thisVue.ArrEnumField = thisVue.Fields.filter(function (val) {
       return val.IsForeignKey
     })// 所有select/枚举
     thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
       thisVue.el_remoteMethod('', item, 'search', true)
       thisVue.el_remoteMethod('', item, 'form', true)
     })
+    // thisVue.ArrTagEditField = thisVue.Fields.filter(function (field) {
+    //   return field.inputType === 'tagedit' && field.Editable
+    // })// 所有数组编辑字段
   }, // 数据初始化，还未渲染dom,在此处设置的数据 不受响应
   mounted: function () {
     // document.querySelector('#div_Loading').hidden = true // 必须得有，不然一直显示加载中。。。
@@ -185,9 +228,10 @@ var cRUDMixin = {
     }
     tb.pagiNation = pagiNation
     tb.filters = filters
-    tb.ArrFormField = ArrFormField // 添加/编辑字段 通过此配置渲染
-    tb.ArrListFields = ArrListField // table展示列 通过此配置渲染
-    tb.ArrSearchField = ArrSearchField // 搜索字段数据通过此配置渲染
+    tb.ArrFormField = [] // ArrFormField // 添加/编辑字段 通过此配置渲染
+    tb.ArrListField = [] // ArrListField // table展示列 通过此配置渲染
+    tb.ArrSearchField = [] // ArrSearchField // 搜索字段数据通过此配置渲染
+    tb.ArrTagEditField = [] // ArrTagEditField // 搜索字段数据通过此配置渲染
     // tb.valid_rules = valid_rules
     // el-select 搜索框数据
     tb.el_selt = {
@@ -204,7 +248,7 @@ var cRUDMixin = {
       // Object.defineProperty(this.UserRoles,'Edit',{value:false})
       // var tCurrRowData = typeof (this.curr_rowdata)
       // if (tCurrRowData === 'undefined' || this.curr_rowdata === null || JSON.stringify(this.curr_rowdata) === '{}') {
-      if (objIsEmpty(this.CurrRowData)) {
+      if (objIsEmpty(this.curr_rowdata)) {
         return '未知'
       }
       if (this.curr_rowdata.Id <= 0) {
@@ -299,6 +343,9 @@ var cRUDMixin = {
       }
       if (rowConfig.Type === 'datetime') {
         elInputType = 'date-picker'
+      }
+      if (rowConfig.inputType === 'tagedit') {
+        return 'TagEdit'
       }
       // ES5 模板替换
       return `el-${elInputType}`// 'el-'+elInputType
@@ -467,15 +514,33 @@ var cRUDMixin = {
               thisVue.el_remoteMethod(val, OFilter, 'form', false)
             }
           }
+        } else {
+          var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
+          if (qArrTagEdit.length > 0) {
+            currRowData[item] = []
+          }
+        }
+      })
+      thisVue.ArrTagEditField.forEach(item => {
+        let tagVal = thisVue.curr_rowdata[item.Name]
+        if (objIsEmpty(tagVal)) {
+          thisVue.curr_rowdata[item.Name] = []
         }
       })
       // console.log('row-dblclick',row)
     }, // 双击行
     handleAddRow: function (e) {
+      let thisVue = this
       // console.log('handleAddRow',e)
-      this.centerDialogVisible = true
-      this.curr_rowdata = { Id: --this.AddNum }
-      this.dlgLoading = false
+      thisVue.centerDialogVisible = true
+      thisVue.curr_rowdata = { Id: --this.AddNum }
+      thisVue.dlgLoading = false
+      // 赋值数据编辑新值
+      thisVue.ArrTagEditField.forEach(field => {
+        if (field.inputType === 'tagedit') {
+          thisVue.curr_rowdata[field.Name] = []
+        }
+      })
     }, // 增加行数据 弹出框添加
     deleteRow: function (index, row) {
       // this.tableData.splice(index, 1)

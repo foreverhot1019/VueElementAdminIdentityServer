@@ -132,7 +132,8 @@ export const menus = {
   Contact: () => import('@/views/Contact/Contact'),
   MyTest: () => import('@/views/MyTest/MyTest'),
   UserManage: () => import('@/views/UserManage/User'),
-  Role: () => import('@/views/Role')
+  Role: () => import('@/views/Role'),
+  IdsIdentityResource: () => import('@/views/IdsIdentityResource')
   // IdsClient: () => import('@/views/MyTest/IdsClient')
 }
 /**
