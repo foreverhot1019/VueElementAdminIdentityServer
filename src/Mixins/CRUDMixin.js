@@ -1,6 +1,7 @@
 import { objIsEmpty } from '@/utils'
 import BaseApi from '@/axiosAPI/BaseApi'
 import moment from 'moment'
+import elementExt from '@/utils/elementExtention'
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 let CustomerFields = {
@@ -116,52 +117,58 @@ let BaseArrField = {
 var cRUDMixin = {
   directives: {}, // 注册局部指令
   created: function () {
-    let thisVue = this
-    thisVue.$set(thisVue, 'ArrFormField', [])
-    thisVue.$set(thisVue, 'ArrListField', [])
-    thisVue.$set(thisVue, 'ArrSearchField', [])
-    thisVue.$set(thisVue, 'ArrTagEditField', [])
-    let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
-    let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
-    let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
-    let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
+    this.fieldsUpdate()
+    // let thisVue = this
+    // thisVue.$set(thisVue, 'ArrEnumField', [])
+    // thisVue.$set(thisVue, 'ArrFormField', [])
+    // thisVue.$set(thisVue, 'ArrListField', [])
+    // thisVue.$set(thisVue, 'ArrSearchField', [])
+    // thisVue.$set(thisVue, 'ArrTagEditField', [])
+    // let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
+    // let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
+    // let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
+    // let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+    // let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
 
-    if (!objIsEmpty(thisVue.Fields)) {
-      // 列表/编辑/搜索 字段集合
-      thisVue.Fields.forEach((item, idx) => {
-        if (item.FormShow && !item.IsKey) {
-          ArrFormField.push(item)
-        }
-        if (item.FormOrder > 0) {
-          this.IsListOrder = true
-        }
-        if (item.ListShow && !item.IsKey) {
-          ArrListField.push(item)
-        }
-        if (item.IsListOrder > 0) {
-          this.IsListOrder = true
-        }
-        if (item.SearchShow && !item.IsKey) {
-          ArrSearchField.push(item)
-        }
-        if (item.SearchOrder > 0) {
-          this.IsSearchOrder = true
-        }
-        if (item.inputType === 'tagedit') {
-          ArrTagEditField.push(item)
-        }
-      })
-    }
-    thisVue.ArrEnumField = thisVue.Fields.filter(function (val) {
-      return val.IsForeignKey
-    })// 所有select/枚举
-    thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
-      thisVue.el_remoteMethod('', item, 'search', true)
-      thisVue.el_remoteMethod('', item, 'form', true)
-    })
-    // thisVue.ArrTagEditField = thisVue.Fields.filter(function (field) {
-    //   return field.inputType === 'tagedit' && field.Editable
-    // })// 所有数组编辑字段
+    // if (!objIsEmpty(thisVue.Fields)) {
+    //   // 列表/编辑/搜索 字段集合
+    //   thisVue.Fields.forEach((item, idx) => {
+    //     if (item.FormShow && !item.IsKey) {
+    //       ArrFormField.push(item)
+    //     }
+    //     if (item.FormOrder > 0) {
+    //       this.IsListOrder = true
+    //     }
+    //     if (item.ListShow && !item.IsKey) {
+    //       ArrListField.push(item)
+    //     }
+    //     if (item.IsListOrder > 0) {
+    //       this.IsListOrder = true
+    //     }
+    //     if (item.SearchShow && !item.IsKey) {
+    //       ArrSearchField.push(item)
+    //     }
+    //     if (item.SearchOrder > 0) {
+    //       this.IsSearchOrder = true
+    //     }
+    //     if (item.inputType === 'tagedit') {
+    //       ArrTagEditField.push(item)
+    //     }
+    //     if (item.IsForeignKey) {
+    //       ArrEnumField.push(item)
+    //     }
+    //   })
+    // }
+    // // thisVue.ArrEnumField = thisVue.Fields.filter(function (val) {
+    // //   return val.IsForeignKey
+    // // })// 所有select/枚举
+    // thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
+    //   thisVue.el_remoteMethod('', item, 'search', true)
+    //   thisVue.el_remoteMethod('', item, 'form', true)
+    // })
+    // // thisVue.ArrTagEditField = thisVue.Fields.filter(function (field) {
+    // //   return field.inputType === 'tagedit' && field.Editable
+    // // })// 所有数组编辑字段
   }, // 数据初始化，还未渲染dom,在此处设置的数据 不受响应
   mounted: function () {
     // document.querySelector('#div_Loading').hidden = true // 必须得有，不然一直显示加载中。。。
@@ -177,12 +184,20 @@ var cRUDMixin = {
         console.log(err)
       }
     }
-    const Edit = this.$route.meta.Edit || false // 修改
-    const Create = this.$route.meta.Create || false // 创建
-    const Delete = this.$route.meta.Delete || false // 删除
-    const Audit = this.$route.meta.Edit || false // 审核
-    const Import = this.$route.meta.Import || false // 导入
-    const Export = this.$route.meta.Export || false // 导出
+    const {
+      Edit, // 修改
+      Create, // 创建
+      Delete, // 删除
+      Audit, // 审核
+      Import, // 导入
+      Export // 导出
+    } = this.$route.meta
+    // const Edit = this.$route.meta.Edit || false // 修改
+    // const Create = this.$route.meta.Create || false // 创建
+    // const Delete = this.$route.meta.Delete || false // 删除
+    // const Audit = this.$route.meta.Edit || false // 审核
+    // const Import = this.$route.meta.Import || false // 导入
+    // const Export = this.$route.meta.Export || false // 导出
     Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
     Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
     Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
@@ -208,7 +223,7 @@ var cRUDMixin = {
       curr_rowdata_Original: {}, // 当前行原始数据
       centerDialogVisible: false, // 弹出框是否打开
       dlgLoading: false, // 弹出框加载状态
-      formLabelWidth: '120px',
+      formLabelWidth: this.formlabel_width || '120px',
       tableData: [],
       UserRoles: {} // 权限
     }
@@ -228,6 +243,7 @@ var cRUDMixin = {
     }
     tb.pagiNation = pagiNation
     tb.filters = filters
+    tb.ArrEnumField = [] // 所有外键select字段
     tb.ArrFormField = [] // ArrFormField // 添加/编辑字段 通过此配置渲染
     tb.ArrListField = [] // ArrListField // table展示列 通过此配置渲染
     tb.ArrSearchField = [] // ArrSearchField // 搜索字段数据通过此配置渲染
@@ -242,8 +258,9 @@ var cRUDMixin = {
   }, // 数据集
   computed: { // 计算属性
     dgTitle: function () {
+      let dgTitle = this.title || ''
       // debugger
-      this.UserRoles.Edit = false// 修改不了 writable 为 false 属性const化
+      // this.UserRoles.Edit = false// 修改不了 writable 为 false 属性const化
       // Object.defineProperty(this.UserRoles,'Edit',{configurable:true,writable:true})
       // Object.defineProperty(this.UserRoles,'Edit',{value:false})
       // var tCurrRowData = typeof (this.curr_rowdata)
@@ -252,23 +269,25 @@ var cRUDMixin = {
         return '未知'
       }
       if (this.curr_rowdata.Id <= 0) {
-        return '新增'
+        return `${dgTitle}新增`
       } else {
         if (this.UserRoles.Edit) {
-          return '编辑/查看'
+          return `${dgTitle}编辑`
         } else {
-          return '查看'
+          return `${dgTitle}查看`
         }
       }
     }
   }, // 计算属性
   watch: { // 监听属性变化
     // pagiNation:{ // 深度监听，可监听到对象、数组的变化
-    //     handler(val, oldVal){
-    //         console.log('b.c: '+val.c, oldVal.c)// 但是这两个值打印出来却都是一样的
-    //     },
-    //     immediate: true, // 将立即以表达式的当前值触发回调
-    //     deep:true
+    //   handler(val, oldVal){
+    //       console.log('b.c: '+val.c, oldVal.c)// 但是这两个值打印出来却都是一样的
+    //   },
+    //   // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
+    //   // false:不会在绑定的时候就执行。
+    //   immediate: true, // 将立即以表达式的当前值触发回调
+    //   deep:true
     // },
     'pagiNation.currentPage': {
       handler: function (newValue, oldValue) {
@@ -288,50 +307,108 @@ var cRUDMixin = {
     }
   }, // 监听属性变化
   methods: {
+    fieldsUpdate: function () {
+      let thisVue = this
+      thisVue.$set(thisVue, 'ArrEnumField', [])
+      thisVue.$set(thisVue, 'ArrFormField', [])
+      thisVue.$set(thisVue, 'ArrListField', [])
+      thisVue.$set(thisVue, 'ArrSearchField', [])
+      thisVue.$set(thisVue, 'ArrTagEditField', [])
+      let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
+      let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
+      let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
+      let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+      let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
+      // 设置自定义列 覆盖Fields
+      if (!objIsEmpty(thisVue.CustomerFields)) {
+        Object.entries(thisVue.CustomerFields).forEach(([key, value]) => {
+          let OField = thisVue.Fields.filter(val => {
+            return val.Name === key
+          })
+          if (OField.length > 0) {
+            Object.assign(OField[0], value)
+          }
+        })
+      }
+      if (!objIsEmpty(thisVue.Fields)) {
+        // 列表/编辑/搜索 字段集合
+        thisVue.Fields.forEach((item, idx) => {
+          if (item.FormShow && !item.IsKey) {
+            ArrFormField.push(item)
+          }
+          if (item.FormOrder > 0) {
+            this.IsListOrder = true
+          }
+          if (item.ListShow && !item.IsKey) {
+            ArrListField.push(item)
+          }
+          if (item.IsListOrder > 0) {
+            this.IsListOrder = true
+          }
+          if (item.SearchShow && !item.IsKey) {
+            ArrSearchField.push(item)
+          }
+          if (item.SearchOrder > 0) {
+            this.IsSearchOrder = true
+          }
+          if (item.inputType === 'tagedit') {
+            ArrTagEditField.push(item)
+          }
+          if (item.IsForeignKey) {
+            ArrEnumField.push(item)
+          }
+        })
+      }
+      thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
+        thisVue.el_remoteMethod('', item, 'search', true)
+        thisVue.el_remoteMethod('', item, 'form', true)
+      })
+    }, // 赋值渲染然字段
     el_FormFieldRules: function (rowConfig, isSearchForm) {
-      // 是否搜索form
-      var tIsSearchForm = typeof (isSearchForm)
-      if (tIsSearchForm === 'undefined' || isSearchForm === null || tIsSearchForm !== 'boolean') {
-        isSearchForm = false
-      }
-      var ArrRules = []
-      if (!rowConfig.Editable && !isSearchForm) {
-        return ArrRules
-      }
-      if (rowConfig.Required && !isSearchForm) {
-        ArrRules.push({ required: true, message: '请输入' + rowConfig.DisplayName || rowConfig.Name, trigger: ['blur', 'change'] })
-      }
-      var name = rowConfig.Name.toLowerCase()
-      if (name === 'email' || rowConfig.isEmail) {
-        ArrRules.push({ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] })
-      }
-      if (name.indexOf('password') === 0) {
-        ArrRules.push({ validator: this.$Validtors.PasswordValidator, trigger: ['blur', 'change'] })
-      }
-      if (name.indexOf('idcard') === 0 && rowConfig.inputType === 'text') {
-        ArrRules.push({ validator: this.$Validtors.IdCardValidator, trigger: 'blur' })
-      }
-      if (rowConfig.MinLength || rowConfig.MaxLength) {
-        var rule = { trigger: ['blur', 'change'] }
-        if (rowConfig.MinLength) {
-          rule.min = rowConfig.MinLength
-          if (rowConfig.MaxLength) {
-            rule.message = '字符长度必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-          } else {
-            rule.message = '字符长度 必须大于 ' + rowConfig.MinLength
-          }
-        }
-        if (rowConfig.MaxLength) {
-          rule.max = rowConfig.MaxLength
-          if (rowConfig.MinLength) {
-            rule.message = '字符长度 必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-          } else {
-            rule.message = '字符长度 必须小于 ' + rowConfig.MaxLength
-          }
-        }
-        ArrRules.push(rule)
-      }
-      return ArrRules
+      return elementExt.el_FormFieldRules.call(this, rowConfig, isSearchForm)
+      // // 是否搜索form
+      // var tIsSearchForm = typeof (isSearchForm)
+      // if (tIsSearchForm === 'undefined' || isSearchForm === null || tIsSearchForm !== 'boolean') {
+      //   isSearchForm = false
+      // }
+      // var ArrRules = []
+      // if (!rowConfig.Editable && !isSearchForm) {
+      //   return ArrRules
+      // }
+      // if (rowConfig.Required && !isSearchForm && rowConfig.Type !== 'boolean') {
+      //   ArrRules.push({ required: true, message: '请输入' + rowConfig.DisplayName || rowConfig.Name, trigger: ['blur', 'change'] })
+      // }
+      // var name = rowConfig.Name.toLowerCase()
+      // if (name === 'email' || rowConfig.isEmail) {
+      //   ArrRules.push({ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] })
+      // }
+      // if (name.indexOf('password') === 0) {
+      //   ArrRules.push({ validator: this.$Validtors.PasswordValidator, trigger: ['blur', 'change'] })
+      // }
+      // if (name.indexOf('idcard') === 0 && rowConfig.inputType === 'text') {
+      //   ArrRules.push({ validator: this.$Validtors.IdCardValidator, trigger: 'blur' })
+      // }
+      // if (rowConfig.MinLength || rowConfig.MaxLength) {
+      //   var rule = { trigger: ['blur', 'change'] }
+      //   if (rowConfig.MinLength) {
+      //     rule.min = rowConfig.MinLength
+      //     if (rowConfig.MaxLength) {
+      //       rule.message = '字符长度必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
+      //     } else {
+      //       rule.message = '字符长度 必须大于 ' + rowConfig.MinLength
+      //     }
+      //   }
+      //   if (rowConfig.MaxLength) {
+      //     rule.max = rowConfig.MaxLength
+      //     if (rowConfig.MinLength) {
+      //       rule.message = '字符长度 必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
+      //     } else {
+      //       rule.message = '字符长度 必须小于 ' + rowConfig.MaxLength
+      //     }
+      //   }
+      //   ArrRules.push(rule)
+      // }
+      // return ArrRules
     }, // 输出input验证规则
     el_inputType: function (rowConfig) {
       var elInputType = 'input'
@@ -829,13 +906,13 @@ var cRUDMixin = {
         BaseApi.Get(paramData, url).then(res => {
           let { rows } = res
           try {
-            if (typeof this.el_selt[ArrOptionName] === 'undefined') {
-              thisVue.$set(this.el_selt, ArrOptionName, {})
+            if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
+              thisVue.$set(thisVue.el_selt, ArrOptionName, {})
             }
             if (objIsEmpty(rows)) {
-              thisVue.$set(this.el_selt[ArrOptionName], 'ArrOption', res)
+              thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', res)
             } else {
-              thisVue.$set(this.el_selt[ArrOptionName], 'ArrOption', rows)
+              thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', rows)
             }
           } catch (e) {
             thisVue.$message({
@@ -855,39 +932,6 @@ var cRUDMixin = {
             type: 'error'
           })
         })
-        // thisVue.$http.get(url, {
-        //   params: paramData,
-        //   headers: { // 指示为 ajax请求
-        //     'X-Requested-With': 'XMLHttpRequest'
-        //   }
-        // }).then(function (success) { // 成功
-        //   try {
-        //     if (typeof this.el_selt[ArrOptionName] === 'undefined') {
-        //       thisVue.$set(this.el_selt, ArrOptionName, {})
-        //     }
-        //     if (objIsEmpty(success.body.rows)) {
-        //       thisVue.$set(this.el_selt[ArrOptionName], 'ArrOption', success.body)
-        //     } else {
-        //       thisVue.$set(this.el_selt[ArrOptionName], 'ArrOption', success.body.rows)
-        //     }
-        //   } catch (e) {
-        //     thisVue.$message({
-        //       duration: 0, // 不自动关闭
-        //       showClose: true,
-        //       message: '数据处理，出现错误',
-        //       type: 'error'
-        //     })
-        //   }
-        //   thisVue.el_selt.el_selt_loading = false// 加载完毕
-        // }, function (error) { // 错误
-        //   thisVue.el_selt.el_selt_loading = false// 加载完毕
-        //   thisVue.$message({
-        //     duration: 0, // 不自动关闭
-        //     showClose: true,
-        //     message: `获取数据出现错误:${error}`,
-        //     type: 'error'
-        //   })
-        // })
       } else {
         if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
           thisVue.el_selt[ArrOptionName] = {}

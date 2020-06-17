@@ -3,6 +3,8 @@
  * Created by PanJiaChen on 16/11/18.
  */
 
+import pinyin from '@/utils/Convert2Pinyin'
+
 /**
  * check obj is null or undefined or '' or length<0 or {}
  * @param {Object} obj
@@ -372,4 +374,16 @@ export function removeClass (ele, cls) {
     const reg = new RegExp('(\\s|^)' + cls + '(\\s|$)')
     ele.className = ele.className.replace(reg, ' ')
   }
+}
+
+/**
+ * 中文转换拼英
+ * @param {string} val
+ */
+export function Convert2Pinyin (val) {
+  var PinyinStr = ''
+  if (!objIsEmpty(val)) {
+    PinyinStr = pinyin.getFullChars(val)
+  }
+  return PinyinStr
 }

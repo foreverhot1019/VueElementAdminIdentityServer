@@ -1,10 +1,8 @@
 <template>
-  <div id="div_CRUD">
-    <!--搜索条件-->
-    <!--工具条-->
-    <el-row style="background-color: #eee; padding:10px 0px 0px 10px">
+  <div id="div_AutoCRUD">
+    <el-row style="background-color: #eee; padding:10px 0px 0px 10px"><!--搜索条件工具条-->
         <el-col>
-            <el-form v-bind:inline="true" v-bind:model="filters.filterRules" size="mini" ref="tb_search">
+            <el-form v-bind:inline="true" v-bind:model="filters.filterRules" ref="tb_search">
                 <el-form-item v-for="field in ArrSearchField"
                     v-bind:key="field.Name"
                     v-bind:label-width="formLabelWidth"
@@ -48,19 +46,18 @@
             </el-form>
         </el-col>
     </el-row>
-    <!--按钮组-->
-    <el-row style="padding: 3px 10px 3px 10px;">
+    <el-row style="padding: 3px 10px 3px 10px;"><!--按钮组--><!--padding:上右下左-->
         <el-col>
             <el-button-group>
-                <el-button type="primary" icon="el-icon-plus" size="small" v-bind:disabled="!UserRoles.Create" v-on:click="handleAddRow">新增</el-button>
-                <el-button icon="el-icon-download" size="small" v-bind:disabled="!UserRoles.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
-                <el-button icon="el-icon-upload" size="small" v-bind:disabled="!UserRoles.Import" v-on:click="ImportXls">导入</el-button>
+                <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!UserRoles.Create" v-on:click="handleAddRow">新增</el-button>
+                <el-button icon="el-icon-download" v-bind:disabled="!UserRoles.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
+                <el-button icon="el-icon-upload" v-bind:disabled="!UserRoles.Import" v-on:click="ImportXls">导入</el-button>
             </el-button-group>
         </el-col>
     </el-row>
-    <el-row>
+    <el-row><!--table列表-->
         <el-col>
-            <el-table ref="Mytb" size="mini" style="width: 100%" max-height="500" row-key="Id" border stripe
+            <el-table ref="Mytb" style="width: 100%" max-height="500" row-key="Id" border stripe
                       v-bind:default-sort="{prop:'Id',order:'descending'}"
                       v-bind:data="tableData"
                       v-loading="tbLoading"
@@ -79,18 +76,17 @@
                         v-bind:formatter="formatter(field)">
                     </el-table-column>
                 </template>
-                <el-table-column fixed="right" label="操作" width="51" v-if="UserRoles.Delete">
+                <el-table-column fixed="right" label="操作" width="51" v-if="UserRoles.Delete"><!--table列工具条-->
                     <template slot-scope="sp">
                         <el-tooltip content="删除" placement="top" effect="light">
-                            <el-button type="danger" size="mini" icon="el-icon-delete" circle v-bind:disabled="!UserRoles.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
+                            <el-button type="danger" icon="el-icon-delete" circle v-bind:disabled="!UserRoles.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
             </el-table>
-            <!--工具条-->
-            <el-row style="padding-top: 10px;">
+            <el-row style="padding-top: 10px;"><!--分页工具条&批量删除-->
                 <el-col v-bind:span="8">
-                    <el-button type="danger" size="small" v-on:click="handledelSeltRow" v-bind:disabled="(UserRoles.Delete ? selctRows.length===0 : true)">批量删除</el-button>
+                    <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="(UserRoles.Delete ? selctRows.length===0 : true)">批量删除</el-button>
                 </el-col>
                 <el-col v-bind:span="16">
                     <el-pagination v-model="pagiNation" style="float:right;"
@@ -127,16 +123,17 @@
                            v-bind:type="el_inputProtoType(field)"
                            v-bind:precision="field.Precision"
                            v-bind:clearable="true"
-                           v-bind:show-word-limit="(field.MaxLength||0)>0"
+                           v-bind:show-word-limit="(field.MaxLength||50)>0"
                            v-bind:maxlength="field.MaxLength||50"
                            v-bind:minlength="field.MinLength||50"
                            v-bind:style="{'width':field.Width_input+'px'}">
                     <i slot="suffix" class="el-input__icon fa"
+                       v-if="field.Name.toLowerCase().indexOf('password')>=0"
                        v-show="field.Name.toLowerCase().indexOf('password')>=0"
                        v-on:click="pswView(field)"
                        v-bind:class="el_inputClass(field)"></i>
                 </component>
-                <component v-else-if="field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
+                <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
                            v-model="curr_rowdata[field.Name]"
                            v-bind:style="{'width':field.Width_input+'px'}"
                            v-bind:editable="field.Editable">
@@ -156,7 +153,7 @@
                 </el-select>
             </el-form-item>
         </el-form>
-        <span slot="footer" class="dialog-footer">
+        <span slot="footer" class="dialog-footer"><!--底部按钮组-->
             <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
             <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
         </span>
@@ -194,15 +191,6 @@ let { cRUDMixin, BaseArrField, CustomerFields } = MycRUDMixin
 //   Width_input: "178", //Form-input宽度 <=0 默认*，>0 此宽度为准
 //   inputType: "text", //"password/datetime/text/tagedit";//form中的input类型
 // }
-// 初始化渲染字段数据
-// BaseArrField.IsFormOrder = false
-// BaseArrField.IsListOrder = false
-// BaseArrField.IsSearchOrder = false
-// BaseArrField.SetArrField = [
-//   { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null }
-// ]
-// 设置控制器
-// BaseApi.SetController('AccountManage')
 // 枚举类型字段
 export default {
   name: 'AutoCRUD', // 页面名称（当组件引用时用到）
@@ -215,9 +203,17 @@ export default {
       type: Object,
       required: false
     },
-    Fields: {
+    Fields: { // 所有要渲染的字段
       type: Array,
       required: true
+    },
+    formlabel_width: {
+      type: String,
+      default: '120px'
+    },
+    title: { // 标题
+      type: String,
+      default: ''
     }
   },
   components: {

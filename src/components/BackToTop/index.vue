@@ -57,7 +57,7 @@ export default {
   },
   methods: {
     handleScroll () {
-      console.log('handleScroll', window.pageYOffset, this.visibilityHeight)
+      // console.log('handleScroll', window.pageYOffset, this.visibilityHeight)
       this.visible = window.pageYOffset > this.visibilityHeight
     },
     backToTop () {

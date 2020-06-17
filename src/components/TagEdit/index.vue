@@ -8,10 +8,10 @@
       </el-tag>
     </template>
     <el-input v-if="inputVisible" v-model="inputValue" ref="saveTagInput"
-      maxlength="20" show-word-limit size="mini" style="width: 100px"
+      maxlength="20" show-word-limit style="width: 100px"
       @keyup.enter.native="handleInputConfirm"
       @blur="handleInputConfirm"></el-input>
-    <el-button v-else size="mini" @click="showInput" :disabled="!Editable"><i class="fa fa-tags">New</i> </el-button>
+    <el-button v-else @click="showInput" :disabled="!Editable"><i class="fa fa-tags">New</i> </el-button>
   </div>
 </template>
 <script>
@@ -30,19 +30,23 @@ export default {
     prop: 'Tags',
     event: 'change'
   },
-  created: () => {
+  created: function () {
     // console.log(this.editable, this.Tags)
+    // this.$set(this, 'ArrTag', this.Tags)
+    // let thisVue = this
+    // thisVue.set(thisVue, 'ArrTag', thisVue.Tags)
+    // this.ArrTag = this.Tags
   },
   data () {
     return {
-      ArrTag: this.Tags || [],
+      ArrTag: [],
       inputVisible: false,
       inputValue: '',
       Editable: this.editable
     }
   },
   watch: {
-    Tags: { // 防止第二次修改prop时数据为及时传递过来
+    Tags: { // 防止第二次修改prop时数据未及时传递过来
       handler: function (newval, oldval) {
         this.ArrTag = newval
       },
