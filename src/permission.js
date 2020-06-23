@@ -39,7 +39,10 @@ router.beforeEach(async (to, from, next) => {
           const { roles } = userInfo
           // get user menu routes from server
           const Menus = await store.dispatch('user/getMenu')
+          // console.log('Menus-----', Menus)
+          // 设置异步菜单
           const retSet = await store.dispatch('permission/setAsyncRoutes', Menus)
+          // console.log('retSet-----', retSet)
           if (!retSet) {
             console.log('-----')
           }
@@ -55,7 +58,7 @@ router.beforeEach(async (to, from, next) => {
         } catch (error) {
           // remove token and go to login page to re-login
           await store.dispatch('user/resetToken')
-          Message.error(error || 'Has Error')
+          Message.error(error.Message || 'Has Error')
           next(`/login?redirect=${to.path}`)
           NProgress.done()
         }

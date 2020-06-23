@@ -65,21 +65,26 @@ export default {
     return `el-${elInputType}`// 'el-'+elInputType
   }, // 判断input输出格式
   el_inputProtoType: function (field, isSearchForm) { // el_input-Type属性
+    if (!field.Editable) {
+      return field.inputType
+    }
     // 是否搜索form
     var tisSearchForm = typeof (isSearchForm)
     if (tisSearchForm === 'undefined' || isSearchForm === null || tisSearchForm !== 'boolean') {
       isSearchForm = false
     }
     let filterData = isSearchForm ? this.filters.filterRules : this.curr_rowdata
+    filterData = filterData || {}
+    let p = '$' + field.Name + 'inputType'
     // 设置零时变量，记录$inputType
-    if (filterData['$' + field.Name + 'inputType'] === undefined || filterData['$' + field.Name + 'inputType'] === null) {
+    if (objIsEmpty(filterData[p])) {
       if (field.inputType === 'datetime' && isSearchForm) {
         return 'daterange'
       } else {
         return field.inputType
       }
     } else {
-      return filterData['$' + field.Name + 'inputType']
+      return filterData[p]
     }
   }, // el_input-Type属性
   el_inputClass: function (field) {

@@ -223,6 +223,7 @@ var cRUDMixin = {
       curr_rowdata_Original: {}, // 当前行原始数据
       centerDialogVisible: false, // 弹出框是否打开
       dlgLoading: false, // 弹出框加载状态
+      dlgfullscreen: false, // 弹出框全屏
       formLabelWidth: this.formlabel_width || '120px',
       tableData: [],
       UserRoles: {} // 权限
@@ -428,21 +429,28 @@ var cRUDMixin = {
       return `el-${elInputType}`// 'el-'+elInputType
     }, // 判断input输出格式
     el_inputProtoType: function (field, isSearchForm) { // el_input-Type属性
+      if (!field.Editable) {
+        return field.inputType
+      }
       // 是否搜索form
       var tisSearchForm = typeof (isSearchForm)
       if (tisSearchForm === 'undefined' || isSearchForm === null || tisSearchForm !== 'boolean') {
         isSearchForm = false
       }
       let filterData = isSearchForm ? this.filters.filterRules : this.curr_rowdata
+      if (objIsEmpty(filterData)) {
+        filterData = {}
+      }
+      let p = '$' + field.Name + 'inputType'
       // 设置零时变量，记录$inputType
-      if (filterData['$' + field.Name + 'inputType'] === undefined || filterData['$' + field.Name + 'inputType'] === null) {
+      if (objIsEmpty(filterData[p])) {
         if (field.inputType === 'datetime' && isSearchForm) {
           return 'daterange'
         } else {
           return field.inputType
         }
       } else {
-        return filterData['$' + field.Name + 'inputType']
+        return filterData[p]
       }
     }, // el_input-Type属性
     el_inputClass: function (field) {
@@ -591,13 +599,16 @@ var cRUDMixin = {
               thisVue.el_remoteMethod(val, OFilter, 'form', false)
             }
           }
-        } else {
-          var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
-          if (qArrTagEdit.length > 0) {
-            currRowData[item] = []
-          }
         }
+        // } else {
+        //   // 数据为空时判断是不是
+        //   var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
+        //   if (qArrTagEdit.length > 0) {
+        //     currRowData[item] = []
+        //   }
+        // }
       })
+      // 编辑数据-子数据集为空时，赋值[]
       thisVue.ArrTagEditField.forEach(item => {
         let tagVal = thisVue.curr_rowdata[item.Name]
         if (objIsEmpty(tagVal)) {
@@ -737,6 +748,7 @@ var cRUDMixin = {
       }
     }, // table排序变更
     dlgClose: function () { // 弹出框关闭时触发
+      this.centerDialogVisible = false
       Object.assign(this.curr_rowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
     dlgSubmit: function (e) {

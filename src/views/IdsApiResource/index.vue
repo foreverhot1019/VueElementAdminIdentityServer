@@ -49,9 +49,9 @@
     <el-row style="padding: 3px 10px 3px 10px;"><!--按钮组--><!--padding:上右下左-->
         <el-col>
             <el-button-group>
-                <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!UserRoles.Create" v-on:click="handleAddRow">新增</el-button>
-                <el-button icon="el-icon-download" v-bind:disabled="!UserRoles.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
-                <el-button icon="el-icon-upload" v-bind:disabled="!UserRoles.Import" v-on:click="ImportXls">导入</el-button>
+                <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!$route.meta.Create" v-on:click="handleAddRow">新增</el-button>
+                <el-button icon="el-icon-download" v-bind:disabled="!$route.meta.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
+                <el-button icon="el-icon-upload" v-bind:disabled="!$route.meta.Import" v-on:click="ImportXls">导入</el-button>
             </el-button-group>
         </el-col>
     </el-row>
@@ -76,17 +76,17 @@
                         v-bind:formatter="formatter(field)">
                     </el-table-column>
                 </template>
-                <el-table-column fixed="right" label="操作" width="51" v-if="UserRoles.Delete"><!--table列工具条-->
+                <el-table-column fixed="right" label="操作" width="51" v-if="$route.meta.Delete"><!--table列工具条-->
                     <template slot-scope="sp">
                         <el-tooltip content="删除" placement="top" effect="light">
-                            <el-button type="danger" icon="el-icon-delete" circle v-bind:disabled="!UserRoles.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
+                            <el-button type="danger" icon="el-icon-delete" circle v-bind:disabled="!$route.meta.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
             </el-table>
             <el-row style="padding-top: 10px;"><!--分页工具条&批量删除-->
                 <el-col v-bind:span="8">
-                    <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="(UserRoles.Delete ? selctRows.length===0 : true)">批量删除</el-button>
+                    <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="($route.meta.Delete ? selctRows.length===0 : true)">批量删除</el-button>
                 </el-col>
                 <el-col v-bind:span="16">
                     <el-pagination v-model="pagiNation" style="float:right;"
@@ -105,11 +105,22 @@
         </el-col>
     </el-row>
     <!--弹出框-->
-    <el-dialog v-bind:title="dgTitle" ref="MyDialog" width="60%" center v-el-drag-dialog
+    <el-dialog ref="MyDialog" width="60%" center v-el-drag-dialog
       v-if="curr_rowdata !== null && JSON.stringify(curr_rowdata) !== '{}'"
-      v-bind:visible.sync="centerDialogVisible"
+      :visible.sync="centerDialogVisible"
+      :fullscreen="dlgfullscreen"
       v-loading="dlgLoading"
-      v-on:close="dlgClose">
+      :show-close="false">
+      <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
+        <el-row>
+          <el-col v-bind:span="8" style="cursor:move">&nbsp;</el-col>
+          <el-col v-bind:span="8" style="cursor:move">{{dgTitle}}</el-col>
+          <el-col v-bind:span="8" style="text-align:right">
+            <el-button type="primary" icon="el-icon-check" v-bind:disabled="!$route.meta.Edit" @click="dlgSubmit" title="确 定" circle></el-button>
+            <el-button type="danger" icon="el-icon-close" v-on:click="dlgClose" title="取 消" circle></el-button>
+          </el-col>
+        </el-row>
+      </div>
       <el-form ref="MyForm" v-bind:model="curr_rowdata" label-position="right" inline size="small">
           <el-form-item v-for="field in ArrFormField"
                     v-bind:key="field.Name"
@@ -180,8 +191,8 @@
           </el-tabs><!--Api范围/api密钥-->
       </el-form>
       <span slot="footer" class="dialog-footer"><!--底部按钮组-->
-        <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
-        <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
+        <el-button @click="centerDialogVisible = false">取 消</el-button>
+        <el-button type="primary" v-bind:disabled="!$route.meta.Edit" @click="dlgSubmit">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -190,9 +201,10 @@
 import moment from 'moment'
 import BaseApi from '@/axiosAPI/BaseApi'
 import { objIsEmpty } from '@/utils'
-import TagEdit from '@/components/TagEdit' // 标签编辑展示
+// import TagEdit from '@/components/TagEdit' // 标签编辑展示
 import elementExt from '@/utils/elementExtention'
-import AutoCRUDLocal from '@/components/AutoCRUDLocal' // AutoCRUD组件
+// import AutoCRUDLocal from '@/components/AutoCRUDLocal' // AutoCRUD组件
+// import LazyLoading from '@/components/LazyLoading' // 异步加载
 
 // 渲染CRUD字段数据集
 let ArrField = [
@@ -202,9 +214,9 @@ let ArrField = [
   { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Enabled', DisplayName: '启用', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'NonEditable', DisplayName: '空编辑', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Updated', DisplayName: '更新时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
+  { Name: 'Created', DisplayName: '创建时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
+  { Name: 'Updated', DisplayName: '更新时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
+  { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'UserClaims', DisplayName: 'Api票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Scopes', DisplayName: 'Api范围', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Secrets', DisplayName: 'Api密钥', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
@@ -224,9 +236,9 @@ let ApiSecretFields = [
   { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 1000, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Value', DisplayName: '值', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 2000, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Expiration', DisplayName: '过期时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
+  { Name: 'Expiration', DisplayName: '过期时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Type', DisplayName: '类型', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
+  { Name: 'Created', DisplayName: '创建时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_List: '120', Width_input: '378', Type: 'number', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
 ]
 
@@ -258,8 +270,8 @@ let ApiSecretFields = [
 export default {
   name: 'IdsApiResource', // 页面名称（当组件引用时用到）
   components: {
-    TagEdit, // 标签编辑展示
-    AutoCRUDLocal // 本地数据CRUD
+    TagEdit: () => import('@/components/TagEdit'), // 标签编辑展示
+    AutoCRUDLocal: () => import('@/components/AutoCRUDLocal') // 本地数据CRUD
   },
   directives: {}, // 注册局部指令
   created: function () {
@@ -272,35 +284,29 @@ export default {
     this.tb_GetData() // table数据初始化
     this.$set(this.el_selt, 'el_selt_loading', false) // 选择框loding状态
     /* 设置属性不能修改 相当于const  {value:{}}等价于 {value : {},writable : false,configurable : false,enumerable : false} */
-    Object.defineProperty(this, 'UserRoles', { value: {} })
-    var setterFunc = function (newVal) {
-      var err = '不允许修改值'
-      if (typeof (console) === 'undefined') {
-        alert(err)
-      } else {
-        console.log(err)
-      }
-    }
-    const {
-      Edit, // 修改
-      Create, // 创建
-      Delete, // 删除
-      Audit, // 审核
-      Import, // 导入
-      Export // 导出
-    } = this.$route.meta
-    // const Edit = this.$route.meta.Edit || false // 修改
-    // const Create = this.$route.meta.Create || false // 创建
-    // const Delete = this.$route.meta.Delete || false // 删除
-    // const Audit = this.$route.meta.Edit || false // 审核
-    // const Import = this.$route.meta.Import || false // 导入
-    // const Export = this.$route.meta.Export || false // 导出
-    Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
+    // Object.defineProperty(this, 'UserRoles', { value: {} })
+    // var setterFunc = function (newVal) {
+    //   var err = '不允许修改值'
+    //   if (typeof (console) === 'undefined') {
+    //     alert(err)
+    //   } else {
+    //     console.log(err)
+    //   }
+    // }
+    // const {
+    //   Edit, // 修改
+    //   Create, // 创建
+    //   Delete, // 删除
+    //   Audit, // 审核
+    //   Import, // 导入
+    //   Export // 导出
+    // } = this.$route.meta
+    // Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
   }, // 相当于构造函数，渲染完dom后触发
   filters: { // v-bind可以使用，v-model 无效
   }, // 数据过滤器
@@ -320,6 +326,7 @@ export default {
       curr_rowdata: {}, // 当前选择的行
       curr_rowdata_Original: {}, // 当前行原始数据
       centerDialogVisible: false, // 弹出框是否打开
+      dlgfullscreen: false, // 弹出框全屏
       dlgLoading: false, // 弹出框加载状态
       formLabelWidth: this.formlabel_width || '120px',
       tableData: [],
@@ -372,7 +379,7 @@ export default {
       if (this.curr_rowdata.Id <= 0) {
         return `${dgTitle}新增`
       } else {
-        if (this.UserRoles.Edit) {
+        if (this.$route.meta.Edit) {
           return `${dgTitle}编辑`
         } else {
           return `${dgTitle}查看`
@@ -577,21 +584,20 @@ export default {
               thisVue.el_remoteMethod(val, OFilter, 'form', false)
             }
           }
-        } else {
-          var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
-          if (qArrTagEdit.length > 0) {
-            currRowData[item] = []
-          }
         }
+        // } else {
+        //   var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
+        //   if (qArrTagEdit.length > 0) {
+        //     currRowData[item] = []
+        //   }
+        // }
       })
       thisVue.ArrTagEditField.forEach(item => {
         let tagVal = thisVue.curr_rowdata[item.Name]
         if (objIsEmpty(tagVal)) {
           thisVue.curr_rowdata[item.Name] = []
-          thisVue.curr_rowdata[item.Name].delData = []
-        } else {
-          thisVue.curr_rowdata[item.Name].delData = []
         }
+        thisVue.curr_rowdata[item.Name].delData = thisVue.curr_rowdata[item.Name].delData || []
       })
       // console.log('row-dblclick',row)
     }, // 双击行
@@ -605,7 +611,6 @@ export default {
           newRow[field.Name] = []
           newRow[field.Name].delData = []
           newRow[field.Name].addNum = -1
-          newRow[field.Name].dlgVisible = false // 弹出状态
         }
       })
       thisVue.curr_rowdata = newRow
@@ -730,6 +735,7 @@ export default {
       }
     }, // table排序变更
     dlgClose: function () { // 弹出框关闭时触发
+      this.centerDialogVisible = false
       Object.assign(this.curr_rowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
     dlgSubmit: function (e) {

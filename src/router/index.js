@@ -2,6 +2,7 @@ import Vue from 'vue'
 import Router from 'vue-router'
 /* Layout */
 import Layout from '@/Layout'
+// import LazyLoading from '@/components/LazyLoading'
 
 /* Router Modules */
 // import componentsRouter from './modules/components'
@@ -33,7 +34,7 @@ Vue.use(Router)
  */
 
 /**
- * constantRoutes
+ * constantRoutes 基本菜单
  * a base page that does not have permission requirements
  * all roles can be accessed
  */
@@ -122,23 +123,21 @@ export const constantRoutes = [
     ]
   }
 ]
+// 获取菜单
+// export const menus = {
+//   Layout: Layout,
+//   Home: () => import('@/views/Home/Home'),
+//   About: () => import('@/views/About/About'),
+//   Contact: () => import('@/views/Contact/Contact'),
+//   MyTest: () => import('@/views/MyTest/MyTest'),
+//   UserManage: () => import('@/views/UserManage/User'),
+//   Role: () => import('@/views/Role'),
+//   IdsIdentityResource: () => import('@/views/IdsIdentityResource'),
+//   IdsApiResource: () => import('@/views/IdsApiResource'),
+//   IdsClient: () => import('@/views/IdsClient')
+// }
 /**
- *获取菜单
- */
-export const menus = {
-  Layout: Layout,
-  Home: () => import('@/views/Home/Home'),
-  About: () => import('@/views/About/About'),
-  Contact: () => import('@/views/Contact/Contact'),
-  MyTest: () => import('@/views/MyTest/MyTest'),
-  UserManage: () => import('@/views/UserManage/User'),
-  Role: () => import('@/views/Role'),
-  IdsIdentityResource: () => import('@/views/IdsIdentityResource'),
-  IdsApiResource: () => import('@/views/IdsApiResource'),
-  IdsClient: () => import('@/views/IdsClient')
-}
-/**
- * asyncRoutes
+ * asyncRoutes 异步菜单
  * the routes that need to be dynamically loaded based on user roles
  */
 export const asyncRoutes = []

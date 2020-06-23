@@ -3,10 +3,10 @@
     <el-row style="padding: 3px 0px 3px 0px"><!--Table按钮组--><!--上右下左-->
       <el-col>
         <el-button-group>
-         <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!UserRoles.Create" v-on:click="handleAddRow">新增</el-button>
-         <el-button icon="el-icon-download" v-bind:disabled="!UserRoles.Export" v-on:click="ExportXls(tb_OrdCustomer_data,'导出OrdCustomer')">导出</el-button>
-         <el-button icon="el-icon-upload" v-bind:disabled="!UserRoles.Import" v-on:click="ImportXls">导入</el-button>
-         <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="(UserRoles.Delete ? selctRows.length===0 : true)">批量删除</el-button>
+         <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!$route.meta.Create" v-on:click="handleAddRow">新增</el-button>
+         <el-button icon="el-icon-download" v-bind:disabled="!$route.meta.Export" v-on:click="ExportXls(tb_OrdCustomer_data,'导出OrdCustomer')">导出</el-button>
+         <el-button icon="el-icon-upload" v-bind:disabled="!$route.meta.Import" v-on:click="ImportXls">导入</el-button>
+         <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="($route.meta.Delete ? selctRows.length===0 : true)">批量删除</el-button>
         </el-button-group>
       </el-col>
     </el-row>
@@ -37,20 +37,21 @@
     </el-row>
     <!--form编辑弹出框-->
     <el-dialog ref="OrderCuntomerDialog" width="60%" center append-to-body
-      v-bind:close-on-click-modal="false"
-      v-bind:show-close="false"
-      v-bind:visible.sync="DialogVisible"
-      v-bind:before-close="(done)=>{dlgClose(done)}"
+      :close-on-click-modal="false"
+      :show-close="false"
+      :visible.sync="DialogVisible"
+      :fullscreen="dlgfullscreen"
+      :before-close="(done)=>{dlgClose(done)}"
       v-loading="dlgLoading">
-      <div slot="title" class="el-dialog__title" style="">
-       <el-row>
-         <el-col v-bind:span="8" style="cursor:move">&nbsp;</el-col>
-         <el-col v-bind:span="8" style="cursor:move">{{dgTitle}}</el-col>
-         <el-col v-bind:span="8" style="text-align:right">
-          <el-button type="primary" icon="el-icon-check" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgok_func" title="确 定" circle></el-button>
-          <el-button type="danger" icon="el-icon-close" v-on:click="dlgClose" title="取 消" circle></el-button>
-         </el-col>
-       </el-row>
+      <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
+        <el-row>
+          <el-col v-bind:span="8" style="cursor:move">&nbsp;</el-col>
+          <el-col v-bind:span="8" style="cursor:move">{{dgTitle}}</el-col>
+          <el-col v-bind:span="8" style="text-align:right">
+            <el-button type="primary" icon="el-icon-check" v-bind:disabled="!$route.meta.Edit" v-on:click="dlgok_func" title="确 定" circle></el-button>
+            <el-button type="danger" icon="el-icon-close" v-on:click="dlgClose" title="取 消" circle></el-button>
+          </el-col>
+        </el-row>
       </div>
       <el-form ref="OrderCuntomerForm" v-bind:model="OrderCuntomer" label-position="right" inline size="small">
         <!--autocomplete-->
@@ -73,7 +74,9 @@
             v-bind:label="field.DisplayName"
             v-bind:prop="field.Name"
             v-bind:rules="el_FormFieldRules(field)">
-          <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
+          <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'"
+            v-bind:is="el_inputType(field)"
+            v-bind:type="el_inputProtoType(field)"
             v-bind:disabled="field.IsKey || (!field.Editable&&OrderCuntomer.Id>0)"
             v-model="OrderCuntomer[field.Name]"
             v-bind:prop="field.Name"
@@ -89,7 +92,7 @@
               v-on:click="pswView(field)"
               v-bind:class="el_inputClass(field)"></i>
           </component>
-          <component v-else-if="field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
+          <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
                      v-model="OrderCuntomer[field.Name]"
                      v-bind:style="{'width':field.Width_input+'px'}"
                      v-bind:editable="field.Editable">
@@ -110,7 +113,7 @@
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button type="primary" icon="el-icon-check" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgok_func">确 定</el-button>
+        <el-button type="primary" icon="el-icon-check" v-bind:disabled="!$route.meta.Edit" v-on:click="dlgok_func">确 定</el-button>
         <el-button type="default" icon="el-icon-close" v-on:click="dlgClose">取 消</el-button>
       </span>
     </el-dialog>
@@ -199,38 +202,112 @@ export default {
     this.ArrEnumField.forEach(function (item) {
       thisVue.el_remoteMethod('', item, 'form', true)
     }) // 外键触发搜索初始化
+    // const {
+    //   Edit, // 修改
+    //   Create, // 创建
+    //   Delete, // 删除
+    //   Audit, // 审核
+    //   Import, // 导入
+    //   Export // 导出
+    // } = this.$route.meta
+    // Object.defineProperty(this, 'UserRoles', {
+    //   value: {
+    //     Edit, // 修改
+    //     Create, // 创建
+    //     Delete, // 删除
+    //     Audit, // 审核
+    //     Import, // 导入
+    //     Export // 导出
+    //   }
+    // })
+    // this.$forceUpdate() // 强制刷新组件
     /* 设置属性不能修改 相当于const  {value:{}}等价于 {value : {},writable : false,configurable : false,enumerable : false} */
-    Object.defineProperty(this, 'UserRoles', { value: {} })
-    var setterFunc = function (newVal) {
-      var err = '不允许修改值'
-      if (typeof (console) === 'undefined') {
-        alert(err)
-      } else {
-        console.log(err)
-      }
-    }
-    const {
-      Edit, // 修改
-      Create, // 创建
-      Delete, // 删除
-      Audit, // 审核
-      Import, // 导入
-      Export // 导出
-    } = this.$route.meta
+    // Object.defineProperty(this, 'UserRoles', { value: {} })
+    // var setterFunc = function (newVal) {
+    //   var err = '不允许修改值'
+    //   if (typeof (console) === 'undefined') {
+    //     alert(err)
+    //   } else {
+    //     console.log(err)
+    //   }
+    // }
     // const Edit = this.$route.meta.Edit || false // 修改
     // const Create = this.$route.meta.Create || false // 创建
     // const Delete = this.$route.meta.Delete || false // 删除
     // const Audit = this.$route.meta.Audit || false // 审核
     // const Import = this.$route.meta.Import || false // 导入
     // const Export = this.$route.meta.Export || false // 导出
-    Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
-    console.log('mounted', this)
+    // Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit } })
+    // Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create } })
+    // Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete } })
+    // Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit } })
+    // Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import } })
+    // Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export } })
+    console.log('mounted', this.UserRoles)
   }, // 相当于构造函数，渲染完dom后触发
+  computed: { // 计算属性
+    dgTitle: function () {
+      let dgTitle = this.title || ''
+      // debugger
+      // this.UserRoles.Edit = false// 修改不了 writable 为 false 属性const化
+      // Object.defineProperty(this.UserRoles,'Edit',{configurable:true,writable:true})
+      // Object.defineProperty(this.UserRoles,'Edit',{value:false})
+      // var tCurrRowData = typeof (this.OrderCuntomer)
+      // if (tCurrRowData === 'undefined' || this.OrderCuntomer === null || JSON.stringify(this.OrderCuntomer) === '{}') {
+      if (objIsEmpty(this.OrderCuntomer)) {
+        return '未知'
+      }
+      if (this.OrderCuntomer.Id <= 0) {
+        return `${dgTitle}新增`
+      } else {
+        if (this.$route.meta.Edit) {
+          return `${dgTitle}编辑`
+        } else {
+          return `${dgTitle}查看`
+        }
+      }
+    }
+  }, // 计算属性
+  watch: {
+    // tbData: {
+    //   handler: (newval, oldval) => {
+    //     // console.log('watch-tbData', newval, oldval)
+    //     this.tb_OrdCustomer_data = objIsEmpty(newval) ? [] : newval
+    //   }
+    //   // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
+    //   // false:不会在绑定的时候就执行。
+    //   // immediate: true
+    //   // deep: true
+    // },
+    delData: {
+      handler: (newval, oldval) => {
+        // console.log('watch-delData', newval, oldval)
+        this.DelData = objIsEmpty(newval) ? [] : newval
+      }
+      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
+      // false:不会在绑定的时候就执行。
+      // immediate: true
+      // deep: true
+    },
+    formlabel_width: {
+      handler: (newval, oldval) => {
+        this.formLabelWidth = objIsEmpty(newval) ? '120' : newval
+      }
+      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
+      // false:不会在绑定的时候就执行。
+      // immediate: true
+      // deep: true
+    },
+    Fields: {
+      handler: (newval, oldval) => {
+        this.fieldsUpdate()
+      }
+      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
+      // false:不会在绑定的时候就执行。
+      // immediate: true
+      // deep: true
+    }
+  }, // 监听属性变化
   data: function () {
     var data = {
       addNum: 0, // 新增序号
@@ -241,6 +318,7 @@ export default {
       DelData: this.delData, // 记录删除的数据
       UserRoles: {}, // 权限
       DialogVisible: false, // 弹出框显示
+      dlgfullscreen: false, // 弹出框全屏
       dlgLoading: false, // 编辑弹出框加载中
       tbLoading: false, // 数据列表加载中
       selctRows: [], // 选择的数据
@@ -343,9 +421,9 @@ export default {
       this.ArrTagEditField.forEach(field => {
         if (field.inputType === 'tagedit') {
           newRow[field.Name] = []
-          newRow[field.Name].delData = []
-          newRow[field.Name].addNum = -1
-          newRow[field.Name].dlgVisible = false // 弹出状态
+          // newRow[field.Name].delData = []
+          // newRow[field.Name].addNum = -1
+          // newRow[field.Name].dlgVisible = false // 弹出状态
         }
       })
       this.DialogVisible = true
@@ -379,6 +457,22 @@ export default {
               thisVue.el_remoteMethod('', OFilter, 'form', true)
             }
           }
+        }
+        // } else {
+        //   var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
+        //   if (qArrTagEdit.length > 0) {
+        //     currRowdata[item] = []
+        //   }
+        // }
+      })
+      // 编辑数据-子数据集为空时，赋值[]
+      thisVue.ArrTagEditField.forEach(item => {
+        let tagVal = currRowdata[item.Name]
+        if (objIsEmpty(tagVal)) {
+          currRowdata[item.Name] = []
+          // currRowdata[item.Name].delData = []
+          // currRowdata[item.Name].addNum = -1
+          // currRowdata[item.Name].dlgVisible = false // 弹出状态
         }
       })
       console.log('row-dblclick', row)
@@ -414,7 +508,9 @@ export default {
             let KeyId = thisVue.tb_OrdCustomer_data[ArrIdx].Id
             thisVue.tb_OrdCustomer_data.splice(ArrIdx, 1)
             thisVue.DelData.push(KeyId)// 记录删除数据
+            thisVue.tb_OrdCustomer_data.delData.push(KeyId)// 记录删除数据
           })
+          thisVue.$emit('chang', thisVue.tb_OrdCustomer_data)// 触发 v-model 修改
         }
         thisVue.tbLoading = false// 加载中
       }
@@ -436,19 +532,12 @@ export default {
       })
     },
     // 导出 导入 Excel
-    ExportXls: function (JsonData, fileName) {
-      // console.log('ExportXls')
-      return elementExt.ExportXls.call(this, JsonData, fileName)
-    }, // 导出数据
+    ExportXls: elementExt.ExportXls, // 导出数据
     ImportXls: function () {
       // console.log('ImportXls')
     }, // 导入数据
-    formatter: function (field) { // el-table-column 数据显示转换
-      return elementExt.formatter.call(this, field)
-    }, // el-table-column 数据显示转换
-    el_remoteMethod: function (query, field, profx, forceload) {
-      elementExt.el_remoteMethod.call(this, query, field, profx, forceload)
-    }, // 外键触发搜索
+    formatter: elementExt.formatter, // el-table-column 数据显示转换
+    el_remoteMethod: elementExt.el_remoteMethod, // 外键触发搜索
     dlgClose: function (doneFunc) {
       let thisVue = this
       let MyForm = this.$refs['OrderCuntomerForm']
@@ -459,7 +548,7 @@ export default {
           thisVue.DialogVisible = false
           thisVue.$emit('dlgok_func')// 触发父组件事件
         } else {
-          thisVue.$confirm(`${(this.title || '')}验证错误, 强制新增?`, '提示', {
+          thisVue.$confirm(`${thisVue.dgTitle}验证错误, 强制新增?`, '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning'
@@ -535,69 +624,6 @@ export default {
         // }
       }
     } // table排序变更
-  },
-  computed: { // 计算属性
-    dgTitle: function () {
-      let dgTitle = this.title || ''
-      // debugger
-      // this.UserRoles.Edit = false// 修改不了 writable 为 false 属性const化
-      // Object.defineProperty(this.UserRoles,'Edit',{configurable:true,writable:true})
-      // Object.defineProperty(this.UserRoles,'Edit',{value:false})
-      // var tCurrRowData = typeof (this.OrderCuntomer)
-      // if (tCurrRowData === 'undefined' || this.OrderCuntomer === null || JSON.stringify(this.OrderCuntomer) === '{}') {
-      if (objIsEmpty(this.OrderCuntomer)) {
-        return '未知'
-      }
-      if (this.OrderCuntomer.Id <= 0) {
-        return `${dgTitle}新增`
-      } else {
-        if (this.UserRoles.Edit) {
-          return `${dgTitle}编辑`
-        } else {
-          return `${dgTitle}查看`
-        }
-      }
-    }
-  }, // 计算属性
-  watch: {
-    // tbData: {
-    //   handler: (newval, oldval) => {
-    //     // console.log('watch-tbData', newval, oldval)
-    //     this.tb_OrdCustomer_data = objIsEmpty(newval) ? [] : newval
-    //   }
-    //   // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
-    //   // false:不会在绑定的时候就执行。
-    //   // immediate: true
-    //   // deep: true
-    // },
-    delData: {
-      handler: (newval, oldval) => {
-        // console.log('watch-delData', newval, oldval)
-        this.DelData = objIsEmpty(newval) ? [] : newval
-      }
-      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
-      // false:不会在绑定的时候就执行。
-      // immediate: true
-      // deep: true
-    },
-    formlabel_width: {
-      handler: (newval, oldval) => {
-        this.formLabelWidth = objIsEmpty(newval) ? '120' : newval
-      }
-      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
-      // false:不会在绑定的时候就执行。
-      // immediate: true
-      // deep: true
-    },
-    Fields: {
-      handler: (newval, oldval) => {
-        this.fieldsUpdate()
-      }
-      // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
-      // false:不会在绑定的时候就执行。
-      // immediate: true
-      // deep: true
-    }
-  } // 监听属性变化
+  }
 }
 </script>

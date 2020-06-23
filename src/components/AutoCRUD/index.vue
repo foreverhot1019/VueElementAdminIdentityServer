@@ -105,58 +105,69 @@
         </el-col>
     </el-row>
     <!--弹出框-->
-    <el-dialog v-bind:title="dgTitle" ref="MyDialog" width="60%" center v-el-drag-dialog
-               v-bind:visible.sync="centerDialogVisible"
-               v-loading="dlgLoading"
-               v-on:close="dlgClose">
-        <el-form ref="MyForm" v-bind:model="curr_rowdata" label-position="right" inline size="small">
-            <el-form-item v-for="field in ArrFormField"
-                    v-bind:key="field.Name"
-                    v-bind:label-width="formLabelWidth"
-                    v-bind:label="field.DisplayName"
-                    v-bind:prop="field.Name"
-                    v-bind:rules="el_FormFieldRules(field)">
-                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
-                           v-bind:disabled="field.IsKey || (!field.Editable&&curr_rowdata.Id>0)"
-                           v-model="curr_rowdata[field.Name]"
-                           v-bind:prop="field.Name"
-                           v-bind:type="el_inputProtoType(field)"
-                           v-bind:precision="field.Precision"
-                           v-bind:clearable="true"
-                           v-bind:show-word-limit="(field.MaxLength||50)>0"
-                           v-bind:maxlength="field.MaxLength||50"
-                           v-bind:minlength="field.MinLength||50"
-                           v-bind:style="{'width':field.Width_input+'px'}">
-                    <i slot="suffix" class="el-input__icon fa"
-                       v-if="field.Name.toLowerCase().indexOf('password')>=0"
-                       v-show="field.Name.toLowerCase().indexOf('password')>=0"
-                       v-on:click="pswView(field)"
-                       v-bind:class="el_inputClass(field)"></i>
-                </component>
-                <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
-                           v-model="curr_rowdata[field.Name]"
-                           v-bind:style="{'width':field.Width_input+'px'}"
-                           v-bind:editable="field.Editable">
-                </component>
-                <el-select v-else v-model="curr_rowdata[field.Name]"
-                           reserve-keyword clearable
-                           v-bind:remote-method="q=>el_remoteMethod(q,field,'form')"
-                           v-bind:loading="el_selt.el_selt_loading"
-                           v-bind:style="{'width':field.Width_input+'px'}">
-                    <template v-if="el_selt[field.Name+'_form']">
-                        <el-option v-for="item in el_selt[field.Name+'_form'].ArrOption"
-                                   v-bind:key="item.ID"
-                                   v-bind:label="item.TEXT"
-                                   v-bind:value="item.ID">
-                        </el-option>
-                    </template>
-                </el-select>
-            </el-form-item>
-        </el-form>
-        <span slot="footer" class="dialog-footer"><!--底部按钮组-->
-            <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
-            <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
-        </span>
+    <el-dialog ref="MyDialog" width="60%" center v-el-drag-dialog
+        v-loading="dlgLoading"
+        :visible.sync="centerDialogVisible"
+        :show-close="false"
+        :fullscreen="dlgfullscreen">
+      <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
+        <el-row>
+          <el-col v-bind:span="8" style="cursor:move">&nbsp;</el-col>
+          <el-col v-bind:span="8" style="cursor:move">{{dgTitle}}</el-col>
+          <el-col v-bind:span="8" style="text-align:right">
+            <el-button type="primary" icon="el-icon-check" v-bind:disabled="!$route.meta.Edit" @click="dlgSubmit" title="确 定" circle></el-button>
+            <el-button type="danger" icon="el-icon-close" v-on:click="dlgClose" title="取 消" circle></el-button>
+          </el-col>
+        </el-row>
+      </div>
+      <el-form ref="MyForm" v-bind:model="curr_rowdata" label-position="right" inline size="small">
+          <el-form-item v-for="field in ArrFormField"
+                  v-bind:key="field.Name"
+                  v-bind:label-width="formLabelWidth"
+                  v-bind:label="field.DisplayName"
+                  v-bind:prop="field.Name"
+                  v-bind:rules="el_FormFieldRules(field)">
+              <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
+                         v-bind:disabled="field.IsKey || (!field.Editable&&curr_rowdata.Id>0)"
+                         v-model="curr_rowdata[field.Name]"
+                         v-bind:prop="field.Name"
+                         v-bind:type="el_inputProtoType(field)"
+                         v-bind:precision="field.Precision"
+                         v-bind:clearable="true"
+                         v-bind:show-word-limit="(field.MaxLength||50)>0"
+                         v-bind:maxlength="field.MaxLength||50"
+                         v-bind:minlength="field.MinLength||50"
+                         v-bind:style="{'width':field.Width_input+'px'}">
+                  <i slot="suffix" class="el-input__icon fa"
+                     v-if="field.Name.toLowerCase().indexOf('password')>=0"
+                     v-show="field.Name.toLowerCase().indexOf('password')>=0"
+                     v-on:click="pswView(field)"
+                     v-bind:class="el_inputClass(field)"></i>
+              </component>
+              <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
+                         v-model="curr_rowdata[field.Name]"
+                         v-bind:style="{'width':field.Width_input+'px'}"
+                         v-bind:editable="field.Editable">
+              </component>
+              <el-select v-else v-model="curr_rowdata[field.Name]"
+                         reserve-keyword clearable
+                         v-bind:remote-method="q=>el_remoteMethod(q,field,'form')"
+                         v-bind:loading="el_selt.el_selt_loading"
+                         v-bind:style="{'width':field.Width_input+'px'}">
+                  <template v-if="el_selt[field.Name+'_form']">
+                      <el-option v-for="item in el_selt[field.Name+'_form'].ArrOption"
+                                 v-bind:key="item.ID"
+                                 v-bind:label="item.TEXT"
+                                 v-bind:value="item.ID">
+                      </el-option>
+                  </template>
+              </el-select>
+          </el-form-item>
+      </el-form>
+      <span slot="footer" class="dialog-footer"><!--底部按钮组-->
+          <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
+          <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
+      </span>
     </el-dialog>
   </div>
 </template>

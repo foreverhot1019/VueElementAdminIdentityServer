@@ -11,11 +11,14 @@ import pinyin from '@/utils/Convert2Pinyin'
  * @returns {bool}
  */
 export function objIsEmpty (obj) {
-  if (obj === 'undefined' || obj == null) {
+  if (obj === 'undefined' || obj === undefined || obj === null) {
     return true
   } else {
     if (Array.isArray(obj) && obj.length <= 0) {
       return true
+    }
+    if (obj instanceof Date) {
+      return false
     }
     let tpObj = typeof obj
     if (tpObj === 'string' && obj.trim().length <= 0) {

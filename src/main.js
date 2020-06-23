@@ -24,6 +24,7 @@ import * as filters from './filters' // global filters
 import Validtors from './VueExtension/Validators' // global validators
 import formatters from './VueExtension/formatters' // global formatters
 import drag from '@/directive/el-drag-dialog' // global directive
+// import tabResize from '@/directive/el-table' // global directive
 
 /*
  * If you don't want to use mock-server
@@ -54,13 +55,15 @@ Vue.prototype.$Validtors = Validtors
 Vue.prototype.$formatter = formatters
 // register global utility directives
 drag.install(Vue)
+// tabResize.install(Vue)
 
 Vue.config.productionTip = false
 
 var _vue = new Vue({
-  el: '#app',
+  // el: '#app',
   router,
   store,
   i18n,
   render: h => h(App)
 })
+_vue.$mount('#app')

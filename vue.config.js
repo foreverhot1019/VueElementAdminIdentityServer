@@ -7,7 +7,7 @@ const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPl
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
 
 module.exports = {
-  publicPath: process.env.NODE_ENV === 'production' ? '/NodeJs/dist/' : '/', // 默认'/'，部署应用包时的基本 URL
+  publicPath: process.env.NODE_ENV === 'production' ? '/' : '/', // 默认'/'，部署应用包时的基本 URL
   outputDir: process.env.outputDir || 'dist', // 'dist', 生产环境构建文件的目录
   assetsDir: 'static', // 相对于outputDir的静态资源(js、css、img、fonts)目录
   filenameHashing: true, // 默认情况下，生成的静态资源在它们的文件名中包含了 hash 以便更好的控制缓存。然而，这也要求 index 的 HTML 是被 Vue CLI 自动生成的。如果你无法使用 Vue CLI 生成的 index HTML，你可以通过将这个选项设为 false 来关闭文件名哈希。
@@ -172,7 +172,9 @@ module.exports = {
       })
       .end()
     // https://webpack.js.org/configuration/devtool/#development
-    config.when(process.env.NODE_ENV === 'development', config => config.devtool('cheap-source-map'))
+    config.when(process.env.NODE_ENV === 'development', config => {
+      config.devtool('cheap-source-map')
+    })
 
     config.when(process.env.NODE_ENV !== 'development',
       config => {
@@ -214,7 +216,7 @@ module.exports = {
               test: resolve('src/components'), // can customize your rules
               minChunks: 2, // 在分割之前，这个代码块最小应该被引用的次数
               priority: 5, // 优先级配置项
-              chunks: 'all',
+              chunks: 'async', // 'all'|'async'|'initial'(全部|按需加载|初始加载)的chunks
               reuseExistingChunk: true
             }
           }
@@ -225,6 +227,7 @@ module.exports = {
         })
         // 打包文件带hash
         config.output.filename('[name].[hash:16].js').end()
-      })
+      }
+    )
   }
 }

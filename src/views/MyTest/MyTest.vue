@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="fullheight">
     <Logo :page="page" :vuex_1="1" :vuex_2="true" :vuex_3="page" />
     <el-button>
       Add
@@ -34,6 +34,11 @@ let MyTest = {
 }
 export default MyTest
 </script>
-<style scoped>
-
+<style lang="less" scoped>
+.fullheight {
+  @topheight: 80px;
+  height: calc(100vh - @topheight);
+  //height: calc(100%-#{$topheight});
+  border: 1px solid red;
+}
 </style>
