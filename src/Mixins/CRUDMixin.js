@@ -695,11 +695,12 @@ var cRUDMixin = {
             thisVue.tb_GetData() // 删除数据后，重新获取数据
           }
         }).catch(ArrErr => {
+          let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
           thisVue.tbLoading = false // 加载完毕
           thisVue.$message({
             duration: 0, // 不自动关闭
             showClose: true,
-            message: `删除数据，出现错误:${ArrErr.map(x => { return x.ErrMsg }).join(',')}`,
+            message: `删除数据，出现错误:${ErrMsg}`,
             type: 'error'
           })
         })
@@ -808,12 +809,13 @@ var cRUDMixin = {
                 Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
               }
             }
-          }).catch(err => { // 获取所有错误请求的结果
+          }).catch(ArrErr => { // 获取所有错误请求的结果
+            let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
             thisVue.dlgLoading = false // 弹出框加载完毕
             thisVue.$message({
               duration: 0, // 不自动关闭
               showClose: true,
-              message: '提交错误:' + err.map(x => { return x.ErrMsg }).join(';'),
+              message: `提交错误:${ErrMsg}`,
               type: 'error'
             })
           })

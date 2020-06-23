@@ -11,7 +11,7 @@ import pinyin from '@/utils/Convert2Pinyin'
  * @returns {bool}
  */
 export function objIsEmpty (obj) {
-  if (obj === 'undefined' || obj === undefined || obj === null) {
+  if (obj === undefined || obj === null) {
     return true
   } else {
     if (Array.isArray(obj) && obj.length <= 0) {

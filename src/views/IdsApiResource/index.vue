@@ -178,13 +178,13 @@
                 include: 字符串或正则表达式。只有匹配的组件会被缓存。
                 exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
               </el-tab-pane>
-              <el-tab-pane label="Api密钥" name="Secrets">
-                <AutoCRUDLocal ref="Secrets"
-                  v-if="curr_rowdata['Secrets'].dlgVisible"
+              <el-tab-pane label="Api密钥" name="ApiSecrets">
+                <AutoCRUDLocal ref="ApiSecrets"
+                  v-if="curr_rowdata['ApiSecrets'].dlgVisible"
                   :refFieldVal="curr_rowdata.Id.toString()"
                   refFieldName="ApiResourceId"
-                  v-model="curr_rowdata['Secrets']"
-                  :delData="curr_rowdata['Secrets'].delData"
+                  v-model="curr_rowdata['ApiSecrets']"
+                  :delData="curr_rowdata['ApiSecrets'].delData"
                   :Fields="ApiSecretFields"
                   v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
               </el-tab-pane>
@@ -219,7 +219,7 @@ let ArrField = [
   { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'UserClaims', DisplayName: 'Api票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
   { Name: 'Scopes', DisplayName: 'Api范围', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Secrets', DisplayName: 'Api密钥', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
+  { Name: 'ApiSecrets', DisplayName: 'Api密钥', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
 ]
 let ApiScopeFields = [
   { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
@@ -497,9 +497,9 @@ export default {
             item.Scopes.delData = []
             item.Scopes.dlgVisible = false // 弹出状态
             item.Scopes.addNum = -1
-            item.Secrets.delData = []
-            item.Secrets.dlgVisible = false // 弹出状态
-            item.Secrets.addNum = -1
+            item.ApiSecrets.delData = []
+            item.ApiSecrets.dlgVisible = false // 弹出状态
+            item.ApiSecrets.addNum = -1
           })
           thisVue.tableData = rows
           thisVue.pagiNation.total = total
@@ -682,11 +682,12 @@ export default {
             thisVue.tb_GetData() // 删除数据后，重新获取数据
           }
         }).catch(ArrErr => {
+          let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
           thisVue.tbLoading = false // 加载完毕
           thisVue.$message({
             duration: 0, // 不自动关闭
             showClose: true,
-            message: `删除数据，出现错误:${ArrErr.map(x => { return x.ErrMsg }).join(',')}`,
+            message: `删除数据，出现错误:${ErrMsg}`,
             type: 'error'
           })
         })
@@ -795,12 +796,13 @@ export default {
                 Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
               }
             }
-          }).catch(err => { // 获取所有错误请求的结果
+          }).catch(ArrErr => { // 获取所有错误请求的结果
+            let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
             thisVue.dlgLoading = false // 弹出框加载完毕
             thisVue.$message({
               duration: 0, // 不自动关闭
               showClose: true,
-              message: '提交错误:' + err.map(x => { return x.ErrMsg }).join(';'),
+              message: `提交错误:${ErrMsg}`,
               type: 'error'
             })
           })
