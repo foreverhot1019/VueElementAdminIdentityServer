@@ -2,9 +2,73 @@ import { objIsEmpty } from '@/utils'
 import BaseApi from '@/axiosAPI/BaseApi'
 
 export default {
+  fieldsUpdate: function () {
+    let thisVue = this
+    thisVue.$set(thisVue, 'ArrEnumField', [])
+    thisVue.$set(thisVue, 'ArrFormField', [])
+    thisVue.$set(thisVue, 'ArrListField', [])
+    thisVue.$set(thisVue, 'ArrSearchField', [])
+    thisVue.$set(thisVue, 'ArrTagEditField', [])
+    thisVue.$set(thisVue, 'ArrTabEditField', [])
+    let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
+    let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
+    let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
+    let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+    let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
+    let ArrTabEditField = thisVue.ArrTabEditField // Tab编辑字段
+    // 设置自定义列 覆盖Fields
+    if (!objIsEmpty(thisVue.CustomerFields)) {
+      Object.entries(thisVue.CustomerFields).forEach(([key, value]) => {
+        let OField = thisVue.Fields.filter(val => {
+          return val.Name === key
+        })
+        if (OField.length > 0) {
+          Object.assign(OField[0], value)
+        }
+      })
+    }
+    if (!objIsEmpty(thisVue.Fields)) {
+      // 列表/编辑/搜索 字段集合
+      thisVue.Fields.forEach((item, idx) => {
+        if (item.FormShow && !item.IsKey) {
+          ArrFormField.push(item)
+        }
+        if (item.FormOrder > 0) {
+          this.IsListOrder = true
+        }
+        if (item.ListShow && !item.IsKey) {
+          ArrListField.push(item)
+        }
+        if (item.IsListOrder > 0) {
+          this.IsListOrder = true
+        }
+        if (item.SearchShow && !item.IsKey) {
+          ArrSearchField.push(item)
+        }
+        if (item.SearchOrder > 0) {
+          this.IsSearchOrder = true
+        }
+        if (item.inputType === 'tagedit') {
+          ArrTagEditField.push(item)
+        }
+        if (item.inputType === 'tabedit') {
+          ArrTabEditField.push(item)
+        }
+        if (item.IsForeignKey) {
+          ArrEnumField.push(item)
+        }
+      })
+    }
+    thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
+      thisVue.el_remoteMethod('', item, 'search', true)
+      thisVue.el_remoteMethod('', item, 'form', true)
+    })
+  }, // 赋值渲染然字段
   el_FormFieldRules: function (rowConfig, isSearchForm) {
     // 是否搜索form
     var tIsSearchForm = typeof (isSearchForm)
+    let inputType = rowConfig.inputType || 'text'
+    let Type = rowConfig.Type || 'string'
     if (tIsSearchForm === 'undefined' || isSearchForm === null || tIsSearchForm !== 'boolean') {
       isSearchForm = false
     }
@@ -12,7 +76,7 @@ export default {
     if (!rowConfig.Editable && !isSearchForm) {
       return ArrRules
     }
-    if (rowConfig.Required && !isSearchForm && rowConfig.Type !== 'boolean') {
+    if (rowConfig.Required && !isSearchForm && Type !== 'boolean') {
       ArrRules.push({ required: true, message: '请输入' + rowConfig.DisplayName || rowConfig.Name, trigger: ['blur', 'change'] })
     }
     var name = rowConfig.Name.toLowerCase()
@@ -22,10 +86,10 @@ export default {
     if (name.indexOf('password') === 0) {
       ArrRules.push({ validator: this.$Validtors.PasswordValidator, trigger: ['blur', 'change'] })
     }
-    if (name.indexOf('idcard') === 0 && rowConfig.inputType === 'text') {
+    if (name.indexOf('idcard') === 0 && inputType === 'text') {
       ArrRules.push({ validator: this.$Validtors.IdCardValidator, trigger: 'blur' })
     }
-    if (rowConfig.MinLength || rowConfig.MaxLength) {
+    if (Type === 'string' && (rowConfig.MinLength || rowConfig.MaxLength)) {
       var rule = { trigger: ['blur', 'change'] }
       if (rowConfig.MinLength) {
         rule.min = rowConfig.MinLength
@@ -65,12 +129,13 @@ export default {
     return `el-${elInputType}`// 'el-'+elInputType
   }, // 判断input输出格式
   el_inputProtoType: function (field, isSearchForm) { // el_input-Type属性
+    let inputType = field.inputType || 'text'
     if (!field.Editable) {
-      return field.inputType
+      return inputType
     }
     // 是否搜索form
     var tisSearchForm = typeof (isSearchForm)
-    if (tisSearchForm === 'undefined' || isSearchForm === null || tisSearchForm !== 'boolean') {
+    if (tisSearchForm === undefined || isSearchForm === null || tisSearchForm !== 'boolean') {
       isSearchForm = false
     }
     let filterData = isSearchForm ? this.filters.filterRules : this.curr_rowdata
@@ -78,10 +143,12 @@ export default {
     let p = '$' + field.Name + 'inputType'
     // 设置零时变量，记录$inputType
     if (objIsEmpty(filterData[p])) {
-      if (field.inputType === 'datetime' && isSearchForm) {
+      if (inputType === 'datetime' && isSearchForm) {
         return 'daterange'
+      } if (inputType === 'text' && field.MaxLength > 100) {
+        return 'textarea'
       } else {
-        return field.inputType
+        return inputType
       }
     } else {
       return filterData[p]
@@ -92,7 +159,7 @@ export default {
       let currRowData = this.curr_rowdata
       let name = '$' + field.Name + 'pswView'
       let inputClass = { 'fa-eye-slash': false, 'fa-eye': currRowData[name] }
-      if (currRowData[name] === undefined || currRowData[name] === null) {
+      if (objIsEmpty(currRowData[name])) {
         inputClass['fa-eye-slash'] = true
       } else {
         inputClass['fa-eye-slash'] = !currRowData[name]
@@ -106,7 +173,7 @@ export default {
   pswView: function (field) { // 密码框 显示隐藏
     var pswView = '$' + field.Name + 'pswView'
     var inputType = '$' + field.Name + 'inputType'
-    if (this.curr_rowdata[pswView] === undefined || this.curr_rowdata[pswView] === null) {
+    if (objIsEmpty(this.curr_rowdata[pswView])) {
       this.$set(this.curr_rowdata, pswView, true)
       this.$set(this.curr_rowdata, inputType, 'text')
     } else if (!this.curr_rowdata[pswView]) {

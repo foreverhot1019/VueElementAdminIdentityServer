@@ -26,7 +26,8 @@
                     <el-select v-else v-model="filters.filterRules[field.Name]"
                                reserve-keyword clearable
                                v-bind:remote-method="q=>el_remoteMethod(q,field,'search')"
-                               v-bind:loading="el_selt.el_selt_loading">
+                               v-bind:loading="el_selt.el_selt_loading"
+                               v-bind:multiple="field.multiple">
                         <template v-if="el_selt[field.Name+'_search']">
                             <el-option v-for="item in el_selt[field.Name+'_search'].ArrOption"
                                        v-bind:key="item.ID"
@@ -49,9 +50,9 @@
     <el-row style="padding: 3px 10px 3px 10px;"><!--按钮组--><!--padding:上右下左-->
         <el-col>
             <el-button-group>
-                <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!UserRoles.Create" v-on:click="handleAddRow">新增</el-button>
-                <el-button icon="el-icon-download" v-bind:disabled="!UserRoles.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
-                <el-button icon="el-icon-upload" v-bind:disabled="!UserRoles.Import" v-on:click="ImportXls">导入</el-button>
+                <el-button type="primary" icon="el-icon-plus" v-bind:disabled="!$route.meta.Create" v-on:click="handleAddRow">新增</el-button>
+                <el-button icon="el-icon-download" v-bind:disabled="!$route.meta.Export" v-on:click="ExportXls(tableData,'Excel导入配置')">导出</el-button>
+                <el-button icon="el-icon-upload" v-bind:disabled="!$route.meta.Import" v-on:click="ImportXls">导入</el-button>
             </el-button-group>
         </el-col>
     </el-row>
@@ -69,24 +70,24 @@
                     <el-table-column show-overflow-tooltip
                         v-for="field in ArrListField"
                         v-bind:key="field.Name"
-                        v-bind:width="field.Width_List"
+                        v-bind:width="field.Width_List||120"
                         v-bind:sortable="field.Sortable?'custom':false"
                         v-bind:prop="field.Name"
                         v-bind:label="field.DisplayName"
                         v-bind:formatter="formatter(field)">
                     </el-table-column>
                 </template>
-                <el-table-column fixed="right" label="操作" width="51" v-if="UserRoles.Delete"><!--table列工具条-->
+                <el-table-column fixed="right" label="操作" width="51" v-if="$route.meta.Delete"><!--table列工具条-->
                     <template slot-scope="sp">
                         <el-tooltip content="删除" placement="top" effect="light">
-                            <el-button type="danger" icon="el-icon-delete" circle v-bind:disabled="!UserRoles.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
+                            <el-button type="danger" icon="el-icon-delete" circle v-bind:disabled="!$route.meta.Delete" v-on:click.native.prevent="deleteRow(sp.$index, sp.row)"></el-button>
                         </el-tooltip>
                     </template>
                 </el-table-column>
             </el-table>
             <el-row style="padding-top: 10px;"><!--分页工具条&批量删除-->
                 <el-col v-bind:span="8">
-                    <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="(UserRoles.Delete ? selctRows.length===0 : true)">批量删除</el-button>
+                    <el-button type="danger" v-on:click="handledelSeltRow" v-bind:disabled="($route.meta.Delete ? selctRows.length===0 : true)">批量删除</el-button>
                 </el-col>
                 <el-col v-bind:span="16">
                     <el-pagination v-model="pagiNation" style="float:right;"
@@ -106,10 +107,11 @@
     </el-row>
     <!--弹出框-->
     <el-dialog ref="MyDialog" width="60%" center v-el-drag-dialog
-        v-loading="dlgLoading"
-        :visible.sync="centerDialogVisible"
-        :show-close="false"
-        :fullscreen="dlgfullscreen">
+      v-if="curr_rowdata !== null && JSON.stringify(curr_rowdata) !== '{}'"
+      v-loading="dlgLoading"
+      v-bind:visible.sync="centerDialogVisible"
+      v-bind:show-close="false"
+      v-bind:fullscreen="dlgfullscreen">
       <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
         <el-row>
           <el-col v-bind:span="8" style="cursor:move">&nbsp;</el-col>
@@ -120,7 +122,7 @@
           </el-col>
         </el-row>
       </div>
-      <el-form ref="MyForm" v-bind:model="curr_rowdata" label-position="right" inline size="small">
+      <el-form ref="MyForm" v-bind:model="curr_rowdata" v-bind:label-position="label_position" inline>
           <el-form-item v-for="field in ArrFormField"
                   v-bind:key="field.Name"
                   v-bind:label-width="formLabelWidth"
@@ -137,7 +139,7 @@
                          v-bind:show-word-limit="(field.MaxLength||50)>0"
                          v-bind:maxlength="field.MaxLength||50"
                          v-bind:minlength="field.MinLength||50"
-                         v-bind:style="{'width':field.Width_input+'px'}">
+                         v-bind:style="{'width':(field.Width_input||178)+'px'}">
                   <i slot="suffix" class="el-input__icon fa"
                      v-if="field.Name.toLowerCase().indexOf('password')>=0"
                      v-show="field.Name.toLowerCase().indexOf('password')>=0"
@@ -146,14 +148,16 @@
               </component>
               <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
                          v-model="curr_rowdata[field.Name]"
-                         v-bind:style="{'width':field.Width_input+'px'}"
+                         v-bind:style="{'width':(field.Width_input||378)+'px'}"
+                         v-bind:maxlength="field.MaxLength||20"
                          v-bind:editable="field.Editable">
               </component>
               <el-select v-else v-model="curr_rowdata[field.Name]"
                          reserve-keyword clearable
                          v-bind:remote-method="q=>el_remoteMethod(q,field,'form')"
                          v-bind:loading="el_selt.el_selt_loading"
-                         v-bind:style="{'width':field.Width_input+'px'}">
+                         v-bind:style="{'width':(field.Width_input||178)+'px'}"
+                         v-bind:multiple="field.multiple">
                   <template v-if="el_selt[field.Name+'_form']">
                       <el-option v-for="item in el_selt[field.Name+'_form'].ArrOption"
                                  v-bind:key="item.ID"
@@ -163,10 +167,30 @@
                   </template>
               </el-select>
           </el-form-item>
+          <el-tabs v-if="ArrTabEditField&&ArrTabEditField.length>0" v-model="TabActiveName" ref="el_Tab" type="border-card" v-on:tab-click="TabClick">
+              <template v-for="tab in ArrTabEditField" >
+                <el-tab-pane v-bind:label="tab.DisplayName" v-bind:name="tab.Name" v-bind:key="tab.Name">
+                  <AutoCRUDLocal v-bind:ref="tab.Name"
+                    v-if="curr_rowdata[tab.Name].dlgVisible"
+                    v-bind:refFieldVal="curr_rowdata.Id.toString()"
+                    v-bind:refFieldName="Fields[tab.Name+'Fields'].refFieldName"
+                    v-model="curr_rowdata[tab.Name]"
+                    v-bind:delData="curr_rowdata[tab.Name].delData"
+                    v-bind:Fields="Fields[tab.Name+'Fields']"
+                    v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
+                    <!-- _self 获取vue实例 filters
+                    v-bind:Fields="tab.Name+'Fields'|getVueDataByStr"
+                    v-bind:Fields="_self[tab.Name+'Fields'}" -->
+                  <!--keep-alive 保持上次渲染时的状态
+                  include: 字符串或正则表达式。只有匹配的组件会被缓存。
+                  exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
+                </el-tab-pane>
+              </template>
+          </el-tabs><!--Api范围/api密钥-->
       </el-form>
       <span slot="footer" class="dialog-footer"><!--底部按钮组-->
           <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
-          <el-button type="primary" v-bind:disabled="!UserRoles.Edit" v-on:click="dlgSubmit">确 定</el-button>
+          <el-button type="primary" v-bind:disabled="!$route.meta.Edit" v-on:click="dlgSubmit">确 定</el-button>
       </span>
     </el-dialog>
   </div>
@@ -175,32 +199,36 @@
 import BaseApi from '@/axiosAPI/BaseApi'
 import MycRUDMixin from '@/Mixins/CRUDMixin'
 import { objIsEmpty } from '@/utils'
-import TagEdit from '@/components/TagEdit' // 标签编辑展示
+// import TagEdit from '@/components/TagEdit' // 标签编辑展示
+// import LazyLoading from '@/components/LazyLoading' // 异步加载
 
-let { cRUDMixin, BaseArrField, CustomerFields } = MycRUDMixin
+let { cRUDMixin, CustomerFields } = MycRUDMixin
+
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
-//   DisplayName: "授权币制",//显示名称
+//   Name: 'Currency', //名称
+//   DisplayName: '授权币制',//显示名称
+//   IsKey: true, //主键
 //   Editable: true, //可编辑
-//   ForeignKeyGetListUrl: '/PARA_CURRs/GetPagerPARA_CURR_FromCache', //获取外键数据Url
-//   FormOrder: 0, //Form排序
+//   Required: true, //必填
+//   Type: 'string', //'datetime/number/string/boolean';//类型-默认string
+//   inputType: 'text', //'password/datetime/text/tagedit/tabedit';//form中的input类型-默认text
+//   IsForeignKey: true, //外键渲染为Select
+//   multiple: true, //select多选
+//   ForeignKeyGetListUrl: '/api/GetPagerPARA_CURR_FromCache', //获取外键数据Url
+//   isEmail: true, //邮件格式
+//   FormOrder: 1, //Form排序
 //   FormShow: true, //Form中展示
-//   IsForeignKey: true, //外键
-//   IsKey: false, //主键
-//   ListOrder: 0, //列表排序
+//   ListOrder: 1, //列表排序
 //   ListShow: true, //列表展示
 //   MaxLength: 50, //最大长度
-//   MinLength: 0, //最小长度
-//   Name: "Currency", //名称
-//   //Type为number时，可设置小数位
-//   Required: false, //必填
-//   SearchOrder: 0, //搜索排序
+//   MinLength: 10, //最小长度
+//   Precision: 2 //小数位位数 //Type为number时，可设置小数位
+//   SearchOrder: 1, //搜索排序
 //   SearchShow: true, //搜索中展示
 //   Sortable: true, //是否可排序
-//   Type: "string", //"datetime/number/string/boolean";//类型
-//   Width_List: "120", //列表-列宽度 <=0 默认*，>0 此宽度为准
-//   Width_input: "178", //Form-input宽度 <=0 默认*，>0 此宽度为准
-//   inputType: "text", //"password/datetime/text/tagedit";//form中的input类型
+//   Width_List: '120', //列表-列宽度 <=0 默认*，>0 此宽度为准
+//   Width_input: '178', //Form-input宽度 <=0 默认*，>0 此宽度为准
 // }
 // 枚举类型字段
 export default {
@@ -222,24 +250,37 @@ export default {
       type: String,
       default: '120px'
     },
+    formlabel_position: {
+      type: String,
+      default: 'right'
+    },
     title: { // 标题
       type: String,
       default: ''
     }
   },
   components: {
-    TagEdit // 标签编辑展示
+    TagEdit: () => import('components/TagEdit'), // 标签编辑展示
+    AutoCRUDLocal: () => import('components/AutoCRUDLocal') // 本地数据CRUD
   },
   created: function () {
-    let { CustomerFields: propCustomerFields, Fields, ControllerName } = this
+    console.log('AutoCrud---------')
+    // 赋值渲染然字段
+    // ArrEnumField/ArrFormField/ArrListField/ArrSearchField/ArrTagEditField/ArrTabEditField
+    this.fieldsUpdate()
+    let { CustomerFields: propCustomerFields, ControllerName } = this
     // 设置自定义数据
     if (!objIsEmpty(propCustomerFields)) {
       propCustomerFields.entries().foreach((key, value) => {
         CustomerFields[key] = value
       })
     }
-    // 初始化渲染CRUD字段数据
-    BaseArrField.SetArrField = Fields
+    // 为了filters能使用this指向vue实例
+    this._f = function (id) {
+      return this.$options.filters[id].bind(this._self)
+    }
+    // // 初始化渲染CRUD字段数据
+    // BaseArrField.SetArrField = Fields
     // 设置控制器
     BaseApi.SetController(ControllerName)
   }, // 渲染dom前触发

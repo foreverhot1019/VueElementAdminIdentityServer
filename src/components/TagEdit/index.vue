@@ -8,7 +8,7 @@
       </el-tag>
     </template>
     <el-input v-if="inputVisible" v-model="inputValue" ref="saveTagInput"
-      maxlength="20" show-word-limit style="width: 100px"
+      :maxlength="MaxLength" :show-word-limit="true" style="width: 50%"
       @keyup.enter.native="handleInputConfirm"
       @blur="handleInputConfirm"></el-input>
     <el-button v-else @click="showInput" :disabled="!Editable"><i class="fa fa-tags">New</i> </el-button>
@@ -19,11 +19,19 @@ export default {
   props: {
     Tags: { // tag标签集合
       type: Array,
-      required: true
+      required: false
     },
     editable: { // 可编辑
       type: Boolean,
       Default: false
+    },
+    inputwidth: { // 编辑框宽度
+      type: Number,
+      Default: 100
+    },
+    maxlength: {
+      type: Number,
+      Default: 20
     }
   },
   model: {
@@ -31,18 +39,21 @@ export default {
     event: 'change'
   },
   created: function () {
-    // console.log(this.editable, this.Tags)
+    console.log(this.maxlength)
     // this.$set(this, 'ArrTag', this.Tags)
     // let thisVue = this
     // thisVue.set(thisVue, 'ArrTag', thisVue.Tags)
     // this.ArrTag = this.Tags
   },
   data () {
+    console.log('maxlength', this.maxlength)
     return {
       ArrTag: [],
       inputVisible: false,
       inputValue: '',
-      Editable: this.editable
+      Editable: this.editable,
+      Width: this.inputwidth,
+      MaxLength: this.maxlength
     }
   },
   watch: {

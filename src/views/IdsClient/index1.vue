@@ -24,9 +24,10 @@
                            v-bind:class="el_inputClass(field)"></i>
                     </component>
                     <el-select v-else v-model="filters.filterRules[field.Name]"
-                               reserve-keyword clearable
-                               v-bind:remote-method="q=>el_remoteMethod(q,field,'search')"
-                               v-bind:loading="el_selt.el_selt_loading">
+                              reserve-keyword clearable
+                              v-bind:remote-method="q=>el_remoteMethod(q,field,'search')"
+                              v-bind:loading="el_selt.el_selt_loading"
+                              v-bind:multiple="field.multiple">
                         <template v-if="el_selt[field.Name+'_search']">
                             <el-option v-for="item in el_selt[field.Name+'_search'].ArrOption"
                                        v-bind:key="item.ID"
@@ -69,7 +70,7 @@
                     <el-table-column show-overflow-tooltip
                         v-for="field in ArrListField"
                         v-bind:key="field.Name"
-                        v-bind:width="field.Width_List"
+                        v-bind:width="field.Width_List|| '120px'"
                         v-bind:sortable="field.Sortable?'custom':false"
                         v-bind:prop="field.Name"
                         v-bind:label="field.DisplayName"
@@ -121,14 +122,16 @@
           </el-col>
         </el-row>
       </div>
-      <el-form ref="MyForm" v-bind:model="curr_rowdata" label-position="right" inline size="small">
+      <el-form ref="MyForm" v-bind:model="curr_rowdata" v-bind:label-position="label_position||'right'" inline size="small">
           <el-form-item v-for="field in ArrFormField"
                     v-bind:key="field.Name"
                     v-bind:label-width="formLabelWidth"
                     v-bind:label="field.DisplayName"
                     v-bind:prop="field.Name"
-                    v-bind:rules="el_FormFieldRules(field)">
-                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
+                    v-bind:rules="el_FormFieldRules(field)"
+                    v-bind:style="{'width': ((field.Width_input||178)+formLabelWidth)+'px'}">
+                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'"
+                           v-bind:is="el_inputType(field)"
                            v-bind:disabled="field.IsKey || (!field.Editable&&curr_rowdata.Id>0)"
                            v-model="curr_rowdata[field.Name]"
                            v-bind:prop="field.Name"
@@ -138,7 +141,7 @@
                            v-bind:show-word-limit="(field.MaxLength||50)>0"
                            v-bind:maxlength="field.MaxLength||50"
                            v-bind:minlength="field.MinLength||50"
-                           v-bind:style="{'width':field.Width_input+'px'}">
+                           v-bind:style="{'width': (field.Width_input||178)+'px'}">
                     <i slot="suffix" class="el-input__icon fa"
                        v-if="field.Name.toLowerCase().indexOf('password')>=0"
                        v-show="field.Name.toLowerCase().indexOf('password')>=0"
@@ -155,7 +158,8 @@
                            reserve-keyword clearable
                            v-bind:remote-method="q=>el_remoteMethod(q,field,'form')"
                            v-bind:loading="el_selt.el_selt_loading"
-                           v-bind:style="{'width':field.Width_input+'px'}">
+                           v-bind:style="{'width':(field.Width_input||178)+'px'}"
+                           v-bind:multiple="field.multiple">
                     <template v-if="el_selt[field.Name+'_form']">
                         <el-option v-for="item in el_selt[field.Name+'_form'].ArrOption"
                                    v-bind:key="item.ID"
@@ -166,29 +170,24 @@
                 </el-select>
           </el-form-item>
           <el-tabs v-model="TabActiveName" ref="el_Tab" type="border-card" v-on:tab-click="TabClick">
-              <el-tab-pane label="Api范围" name="Scopes">
-                <AutoCRUDLocal ref="Scopes"
-                  v-if="curr_rowdata['Scopes'].dlgVisible"
-                  v-bind:refFieldVal="curr_rowdata.Id.toString()"
-                  refFieldName="ApiResourceId"
-                  v-model="curr_rowdata['Scopes']"
-                  v-bind:delData="curr_rowdata['Scopes'].delData"
-                  v-bind:Fields="ApiScopeFields"
-                  v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
-                <!--keep-alive 保持上次渲染时的状态
-                include: 字符串或正则表达式。只有匹配的组件会被缓存。
-                exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
-              </el-tab-pane>
-              <el-tab-pane label="Api密钥" name="ApiSecrets">
-                <AutoCRUDLocal ref="ApiSecrets"
-                  v-if="curr_rowdata['ApiSecrets'].dlgVisible"
-                  v-bind:refFieldVal="curr_rowdata.Id.toString()"
-                  refFieldName="ApiResourceId"
-                  v-model="curr_rowdata['ApiSecrets']"
-                  v-bind:delData="curr_rowdata['ApiSecrets'].delData"
-                  v-bind:Fields="ApiSecretFields"
-                  v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
-              </el-tab-pane>
+              <template v-for="tab in ArrTabEditField" >
+                <el-tab-pane v-bind:label="tab.DisplayName" v-bind:name="tab.Name" v-bind:key="tab.Name">
+                  <AutoCRUDLocal v-bind:ref="tab.Name"
+                    v-if="curr_rowdata[tab.Name].dlgVisible"
+                    v-bind:refFieldVal="curr_rowdata.Id.toString()"
+                    v-bind:refFieldName="Fields[tab.Name+'Fields'].refFieldName"
+                    v-model="curr_rowdata[tab.Name]"
+                    v-bind:delData="curr_rowdata[tab.Name].delData"
+                    v-bind:Fields="Fields[tab.Name+'Fields']"
+                    v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
+                    <!-- _self 获取vue实例 filters
+                    v-bind:Fields="tab.Name+'Fields'|getVueDataByStr"
+                    v-bind:Fields="_self[tab.Name+'Fields'}" -->
+                  <!--keep-alive 保持上次渲染时的状态
+                  include: 字符串或正则表达式。只有匹配的组件会被缓存。
+                  exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
+                </el-tab-pane>
+              </template>
           </el-tabs><!--Api范围/api密钥-->
       </el-form>
       <span slot="footer" class="dialog-footer"><!--底部按钮组-->
@@ -203,147 +202,148 @@ import moment from 'moment'
 import BaseApi from '@/axiosAPI/BaseApi'
 import { objIsEmpty } from '@/utils'
 import elementExt from '@/utils/elementExtention'
-import { LazyLoadingFunc } from '@/components/LazyLoading' // 异步加载
-import ErrLoading from 'components/LazyLoading/ErrLoading'
-import Loading from 'components/LazyLoading/Loading'
-
-// 渲染CRUD字段数据集
-let ArrField = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Name', DisplayName: '名称', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Enabled', DisplayName: '启用', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'NonEditable', DisplayName: '空编辑', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Updated', DisplayName: '更新时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'UserClaims', DisplayName: 'Api票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Scopes', DisplayName: 'Api范围', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tabedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiSecrets', DisplayName: 'Api密钥', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tabedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
-]
-let ApiScopeFields = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Name', DisplayName: '名称', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Required', DisplayName: '必须', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Emphasize', DisplayName: '强调范围', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ShowInDiscoveryDocument', DisplayName: '服务发现', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'UserClaims', DisplayName: '用户票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_List: '120', Width_input: '378', Type: 'number', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
-]
-let ApiSecretFields = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 1000, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Value', DisplayName: '值', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 2000, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Expiration', DisplayName: '过期时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Type', DisplayName: '类型', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_List: '120', Width_input: '378', Type: 'number', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
-]
+// import LazyLoading from '@/components/LazyLoading' // 异步加载
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
-//   DisplayName: "授权币制",//显示名称
+//   Name: 'Currency', //名称
+//   DisplayName: '授权币制',//显示名称
+//   IsKey: true, //主键
 //   Editable: true, //可编辑
-//   ForeignKeyGetListUrl: '/PARA_CURRs/GetPagerPARA_CURR_FromCache', //获取外键数据Url
-//   FormOrder: 0, //Form排序
+//   Required: true, //必填
+//   Type: 'string', //'datetime/number/string/boolean';//类型-默认string
+//   inputType: 'text', //'password/datetime/text/tagedit/tabedit';//form中的input类型-默认text
+//   IsForeignKey: true, //外键渲染为Select
+//   multiple: true, //select多选
+//   ForeignKeyGetListUrl: '/api/GetPagerPARA_CURR_FromCache', //获取外键数据Url
+//   isEmail: true, //邮件格式
+//   FormOrder: 1, //Form排序
 //   FormShow: true, //Form中展示
-//   IsForeignKey: true, //外键
-//   IsKey: false, //主键
-//   ListOrder: 0, //列表排序
+//   ListOrder: 1, //列表排序
 //   ListShow: true, //列表展示
 //   MaxLength: 50, //最大长度
-//   MinLength: 0, //最小长度
-//   Name: "Currency", //名称
-//   //Type为number时，可设置小数位
-//   Required: false, //必填
-//   SearchOrder: 0, //搜索排序
+//   MinLength: 10, //最小长度
+//   Precision: 2 //小数位位数 //Type为number时，可设置小数位
+//   SearchOrder: 1, //搜索排序
 //   SearchShow: true, //搜索中展示
 //   Sortable: true, //是否可排序
-//   Type: "string", //"datetime/number/string/boolean";//类型
-//   Width_List: "120", //列表-列宽度 <=0 默认*，>0 此宽度为准
-//   Width_input: "178", //Form-input宽度 <=0 默认*，>0 此宽度为准
-//   inputType: "text", //"password/datetime/text/tagedit";//form中的input类型
+//   Width_List: '120', //列表-列宽度 <=0 默认*，>0 此宽度为准
+//   Width_input: '178', //Form-input宽度 <=0 默认*，>0 此宽度为准
 // }
 
-// const TagEdit = () => ({
-//   component: import('components/TagEdit'),
-//   // 异步组件加载时使用的组件
-//   loading: Loading,
-//   // 加载失败时使用的组件
-//   error: ErrLoading,
-//   // 展示加载时组件的延时时间。默认值是 200 (毫秒)
-//   delay: 200,
-//   // 如果提供了超时时间且组件加载也超时了，
-//   // 则使用加载失败时使用的组件。默认值是：`Infinity`
-//   timeout: 3000
-// })
-// const AutoCRUDLocal = () => ({
-//   component: import('components/AutoCRUDLocal'),
-//   // 异步组件加载时使用的组件
-//   loading: Loading,
-//   // 加载失败时使用的组件
-//   error: ErrLoading,
-//   // 展示加载时组件的延时时间。默认值是 200 (毫秒)
-//   delay: 200,
-//   // 如果提供了超时时间且组件加载也超时了，
-//   // 则使用加载失败时使用的组件。默认值是：`Infinity`
-//   timeout: 3000
-// })
+// 渲染CRUD字段数据集
+let _ArrField = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'AuthorizationCodeLifetime', DisplayName: '授权码寿命', Type: 'number', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ConsentLifetime', DisplayName: '同意寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AbsoluteRefreshTokenLifetime', DisplayName: '绝对刷新令牌的寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'SlidingRefreshTokenLifetime', DisplayName: '滑动刷新令牌的寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'RefreshTokenUsage', DisplayName: '刷新令牌用法', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'UpdateAccessTokenClaimsOnRefresh', DisplayName: '刷新时更新访问令牌票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'RefreshTokenExpiration', DisplayName: '刷新令牌过期时间', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AccessTokenType', DisplayName: '访问令牌类型', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'EnableLocalLogin', DisplayName: '启用本地登录', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AccessTokenLifetime', DisplayName: '访问令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'IncludeJwtId', DisplayName: '加入JwtId', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AlwaysSendClientClaims', DisplayName: '总是发送客户端票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ClientClaimsPrefix', DisplayName: '票根前缀', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'PairWiseSubjectSalt', DisplayName: '配对主题盐', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
+  { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Editable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Updated', DisplayName: '更新时间', Type: 'datetime', inputType: 'datetime', Editable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'LastAccessed', DisplayName: '最后访问时间', Type: 'datetime', inputType: 'datetime', Editable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'UserSsoLifetime', DisplayName: '用户SSO寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'UserCodeType', DisplayName: '用户码类型', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'IdentityTokenLifetime', DisplayName: '身份令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowOfflineAccess', DisplayName: '允许离线登录', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'ClientId', DisplayName: '客户端ID', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ProtocolType', DisplayName: '协议类型', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'RequireClientSecret', DisplayName: '需要客户端密码', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ClientName', DisplayName: '名称', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
+  { Name: 'ClientUri', DisplayName: 'Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'LogoLUri', DisplayName: 'LogoLUri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'RequireConsent', DisplayName: '需要同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowRememberConsent', DisplayName: '允许记住同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AlwaysIncludeUserClaimsInIdToken', DisplayName: 'IdToken总是加入用户票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'RequirePkce', DisplayName: '需要Pkce', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowPlainTextPkce', DisplayName: '允许纯文本Pkce', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowAccessTokensViaBrowser', DisplayName: '允许通过浏览器获取成功令牌', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'FrontChannelLogoutUri', DisplayName: '前通道注销Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'FrontChannelLogoutSessionRequired', DisplayName: '需要前通道注销会话', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'BackChannelLogoutUri', DisplayName: '反向通道注销Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'BackChannelLogoutSessionRequired', DisplayName: '需要反向通道注销会话', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'DeviceCodeLifetime', DisplayName: '设备代码寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'NonEditable', DisplayName: '不可编辑', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  // select选择框
+  { Name: 'AllowedScopes', DisplayName: '允许范围', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClinetManage/GetAllowedScopes' },
+  { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Editable: true, FormShow: true, IsForeignKey: true, ForeignKeyGetListUrl: '/api/ClinetManage/GetAllowedGrantTypes' },
+  // tagEdit字段
+  { Name: 'IdentityProviderRestrictions', DisplayName: '允许客户端身份提供者', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
+  { Name: 'AllowedCorsOrigins', DisplayName: '允许跨域地址', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
+  { Name: 'RedirectUris', DisplayName: '跳转Uri', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
+  { Name: 'PostLogoutRedirectUris', DisplayName: '登出跳转Uri', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
+  // tab页面
+  { Name: 'Properties', DisplayName: '属性', Width_input: '378', inputType: 'tabedit', Editable: true },
+  { Name: 'Claims', DisplayName: '票根', Width_input: '378', inputType: 'tabedit', Editable: true },
+  { Name: 'ClientSecrets', DisplayName: '密钥', Width_input: '378', inputType: 'tabedit', Editable: true }
+]
+// 必须是 字段名+Fields
+_ArrField.PropertiesFields = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'Key', DisplayName: '键', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'ClientId', DisplayName: '客户端', Type: 'number', Required: true, Editable: false }
+]
+_ArrField.PropertiesFields.refFieldName = 'ClientId' // 与主表关联字段名称
+// 必须是 字段名+Fields
+_ArrField.ClaimsFields = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'Type', DisplayName: '类型', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'ClientId', DisplayName: '客户端', Type: 'number', Required: true, Editable: false }
+]
+_ArrField.ClaimsFields.refFieldName = 'ClientId' // 与主表关联字段名称
+// 必须是 字段名+Fields
+_ArrField.ClientSecretsFields = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'Type', DisplayName: '类型', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'Expiration', DisplayName: '过期时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
+  { Name: 'ClientId', DisplayName: '客户端', Type: 'number', Required: true }
+]
+_ArrField.ClientSecretsFields.refFieldName = 'ClientId' // 与主表关联字段名称
 // 枚举类型字段
 export default {
-  name: 'IdsApiResource', // 页面名称（当组件引用时用到）
+  name: 'IdsClient', // 页面名称（当组件引用时用到）
   components: {
-    TagEdit: LazyLoadingFunc(() => import('components/TagEdit')), // LazyLoading(() => import('components/TagEdit')), // 标签编辑展示
-    AutoCRUDLocal: LazyLoadingFunc(() => import('components/AutoCRUDLocal')) // LazyLoading(() => import('components/AutoCRUDLocal')) // 本地数据CRUD
+    TagEdit: () => import('components/TagEdit'), // 标签编辑展示
+    AutoCRUDLocal: () => import('components/AutoCRUDLocal') // 本地数据CRUD
   },
   directives: {}, // 注册局部指令
   created: function () {
     // 设置控制器
-    BaseApi.SetController('ApiResource')
+    BaseApi.SetController('ClientManage')
     this.fieldsUpdate()
+    // 为了filters能使用this指向vue实例
+    this._f = function (id) {
+      return this.$options.filters[id].bind(this._self)
+    }
   }, // 数据初始化，还未渲染dom,在此处设置的数据 不受响应
   mounted: function () {
-    // document.querySelector('#div_Loading').hidden = true // 必须得有，不然一直显示加载中。。。
     this.tb_GetData() // table数据初始化
     this.$set(this.el_selt, 'el_selt_loading', false) // 选择框loding状态
-    /* 设置属性不能修改 相当于const  {value:{}}等价于 {value : {},writable : false,configurable : false,enumerable : false} */
-    // Object.defineProperty(this, 'UserRoles', { value: {} })
-    // var setterFunc = function (newVal) {
-    //   var err = '不允许修改值'
-    //   if (typeof (console) === 'undefined') {
-    //     alert(err)
-    //   } else {
-    //     console.log(err)
-    //   }
-    // }
-    // const {
-    //   Edit, // 修改
-    //   Create, // 创建
-    //   Delete, // 删除
-    //   Audit, // 审核
-    //   Import, // 导入
-    //   Export // 导出
-    // } = this.$route.meta
-    // Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
-    // Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
-    // Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
-    // Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
-    // Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
-    // Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
   }, // 相当于构造函数，渲染完dom后触发
   filters: { // v-bind可以使用，v-model 无效
+    getVueDataByStr: function (dataNameStr) {
+      return this[dataNameStr]
+    } // 通过string获取Vue数据
   }, // 数据过滤器
   data: function () {
     var tb = {
-      // tbUrl: {
-      //   controller: 'a',
-      //   exportExcel: 'ExportExcel', // 导出Excel action
-      //   importExcel: 'Upload' // 导入Excel action
-      // },
-      title: 'Api资源', // 页面名称
+      title: 'Ids客户端', // 页面名称
       TabActiveName: '', // 选中tab名称
       AddNum: 0, // 新增序号
       method: 'post', // HTTP请求方法
@@ -355,7 +355,8 @@ export default {
       centerDialogVisible: false, // 弹出框是否打开
       dlgfullscreen: false, // 弹出框全屏
       dlgLoading: false, // 弹出框加载状态
-      formLabelWidth: this.formlabel_width || '120px',
+      formLabelWidth: this.formlabel_width || '100px',
+      label_position: 'top', // Label排列位置
       tableData: [],
       UserRoles: {} // 权限
     }
@@ -375,17 +376,18 @@ export default {
     }
     tb.pagiNation = pagiNation
     tb.filters = filters
-    tb.Fields = ArrField // 所有需要渲染的字段集合
+    tb.Fields = _ArrField // 所有需要渲染的字段集合
     tb.ArrEnumField = [] // 所有外键select字段
     tb.ArrFormField = [] // ArrFormField // 添加/编辑字段 通过此配置渲染
     tb.ArrListField = [] // ArrListField // table展示列 通过此配置渲染
     tb.ArrSearchField = [] // ArrSearchField // 搜索字段数据通过此配置渲染
-    tb.ArrTagEditField = [] // ArrTagEditField // 搜索字段数据通过此配置渲染
+    tb.ArrTagEditField = [] // ArrTagEditField // 数组字段数据通过此配置渲染
     tb.ArrTabEditField = [] // ArrTabEditField // Tab展示字段数据通过此配置渲染
     // tb.valid_rules = valid_rules
     // el-select 搜索框数据
-    tb.ApiScopeFields = ApiScopeFields
-    tb.ApiSecretFields = ApiSecretFields
+    // tb.PropertiesFields = _PropertiesFields // 属性
+    // tb.ClaimsFields = _ClaimsFields // 票根
+    // tb.ClientSecretsFields = _ClientSecretsFields // 密钥
     tb.el_selt = {
       // el_selt_loading : false, // 选择框 搜索状态
       // 'CompanyId_form':{ArrOption : []}, // 选择框 数据
@@ -441,7 +443,68 @@ export default {
     }
   }, // 监听属性变化
   methods: {
-    fieldsUpdate: elementExt.fieldsUpdate, // 赋值渲染然字段
+    fieldsUpdate: function () {
+      let thisVue = this
+      thisVue.$set(thisVue, 'ArrEnumField', [])
+      thisVue.$set(thisVue, 'ArrFormField', [])
+      thisVue.$set(thisVue, 'ArrListField', [])
+      thisVue.$set(thisVue, 'ArrSearchField', [])
+      thisVue.$set(thisVue, 'ArrTagEditField', [])
+      thisVue.$set(thisVue, 'ArrTabEditField', [])
+      let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
+      let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
+      let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
+      let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+      let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
+      let ArrTabEditField = thisVue.ArrTabEditField // Tab编辑字段
+      // 设置自定义列 覆盖Fields
+      if (!objIsEmpty(thisVue.CustomerFields)) {
+        Object.entries(thisVue.CustomerFields).forEach(([key, value]) => {
+          let OField = thisVue.Fields.filter(val => {
+            return val.Name === key
+          })
+          if (OField.length > 0) {
+            Object.assign(OField[0], value)
+          }
+        })
+      }
+      if (!objIsEmpty(thisVue.Fields)) {
+        // 列表/编辑/搜索 字段集合
+        thisVue.Fields.forEach((item, idx) => {
+          if (item.FormShow && !item.IsKey) {
+            ArrFormField.push(item)
+          }
+          if (item.FormOrder > 0) {
+            this.IsListOrder = true
+          }
+          if (item.ListShow && !item.IsKey) {
+            ArrListField.push(item)
+          }
+          if (item.IsListOrder > 0) {
+            this.IsListOrder = true
+          }
+          if (item.SearchShow && !item.IsKey) {
+            ArrSearchField.push(item)
+          }
+          if (item.SearchOrder > 0) {
+            this.IsSearchOrder = true
+          }
+          if (item.inputType === 'tagedit') {
+            ArrTagEditField.push(item)
+          }
+          if (item.inputType === 'tabedit') {
+            ArrTabEditField.push(item)
+          }
+          if (item.IsForeignKey) {
+            ArrEnumField.push(item)
+          }
+        })
+      }
+      thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
+        thisVue.el_remoteMethod('', item, 'search', true)
+        thisVue.el_remoteMethod('', item, 'form', true)
+      })
+    }, // 赋值渲染然字段
     el_FormFieldRules: elementExt.el_FormFieldRules, // 输出input验证规则
     el_inputType: elementExt.el_inputType, // 判断input输出格式
     el_inputProtoType: elementExt.el_inputProtoType, // el_input-Type属性
@@ -466,12 +529,22 @@ export default {
           // console.log(res)
           // // 赋值删除&添加序号字段
           // rows.forEach(item => {
-          //   item.Scopes.delData = []
-          //   item.Scopes.dlgVisible = false // 弹出状态
-          //   item.Scopes.addNum = -1
-          //   item.ApiSecrets.delData = []
-          //   item.ApiSecrets.dlgVisible = false // 弹出状态
-          //   item.ApiSecrets.addNum = -1
+          //   thisVue.ArrTabEditField.forEach(tab => {
+          //     item[tab.Name] = {
+          //       delData: [], // 记录删除数据
+          //       dlgVisible: false, // 弹出状态
+          //       addNum: -1 // 记录新增序号
+          //     }
+          //   })
+          //   // item.Properties.delData = []
+          //   // item.Properties.dlgVisible = false // 弹出状态
+          //   // item.Properties.addNum = -1
+          //   // item.Claims.delData = []
+          //   // item.Claims.dlgVisible = false // 弹出状态
+          //   // item.Claims.addNum = -1
+          //   // item.ClientSecrets.delData = []
+          //   // item.ClientSecrets.dlgVisible = false // 弹出状态
+          //   // item.ClientSecrets.addNum = -1
           // })
           thisVue.tableData = rows
           thisVue.pagiNation.total = total
@@ -564,7 +637,7 @@ export default {
         //   }
         // }
       })
-      // 赋值删除
+      // 赋值删除&添加序号字段
       thisVue.ArrTagEditField.forEach(item => {
         let tagVal = thisVue.curr_rowdata[item.Name]
         if (objIsEmpty(tagVal)) {
@@ -576,10 +649,10 @@ export default {
         let tagVal = thisVue.curr_rowdata[item.Name]
         if (objIsEmpty(tagVal)) {
           thisVue.curr_rowdata[item.Name] = []
+          thisVue.curr_rowdata[item.Name].delData = [] // 记录删除数据
+          thisVue.curr_rowdata[item.Name].dlgVisible = false // 弹出状态
+          thisVue.curr_rowdata[item.Name].addNum = -1 // 记录新增序号
         }
-        thisVue.curr_rowdata[item.Name].delData = [] // 记录删除数据
-        thisVue.curr_rowdata[item.Name].dlgVisible = false // 弹出状态
-        thisVue.curr_rowdata[item.Name].addNum = -1 // 记录新增序号
       })
       // console.log('row-dblclick',row)
     }, // 双击行
@@ -831,7 +904,7 @@ export default {
       console.log('dlgOK_Func')
     }, // 子组件触发父组件
     TabClick: function (tab, event) {
-      // console.log('TabClick',tab);
+      // console.log('TabClick', tab)
       this.TabActiveName = tab.name
       var tabObjComponent = this.curr_rowdata[tab.name]
       tabObjComponent.dlgVisible = true // 设置异步组件显示

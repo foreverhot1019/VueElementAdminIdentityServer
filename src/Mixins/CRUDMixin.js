@@ -117,7 +117,12 @@ let BaseArrField = {
 var cRUDMixin = {
   directives: {}, // 注册局部指令
   created: function () {
+    console.log('CrudMixin---------')
     this.fieldsUpdate()
+    // 为了filters能使用this指向vue实例
+    this._f = function (id) {
+      return this.$options.filters[id].bind(this._self)
+    }
     // let thisVue = this
     // thisVue.$set(thisVue, 'ArrEnumField', [])
     // thisVue.$set(thisVue, 'ArrFormField', [])
@@ -174,46 +179,45 @@ var cRUDMixin = {
     // document.querySelector('#div_Loading').hidden = true // 必须得有，不然一直显示加载中。。。
     this.tb_GetData() // table数据初始化
     this.$set(this.el_selt, 'el_selt_loading', false) // 选择框loding状态
-    /* 设置属性不能修改 相当于const  {value:{}}等价于 {value : {},writable : false,configurable : false,enumerable : false} */
-    Object.defineProperty(this, 'UserRoles', { value: {} })
-    var setterFunc = function (newVal) {
-      var err = '不允许修改值'
-      if (typeof (console) === 'undefined') {
-        alert(err)
-      } else {
-        console.log(err)
-      }
-    }
-    const {
-      Edit, // 修改
-      Create, // 创建
-      Delete, // 删除
-      Audit, // 审核
-      Import, // 导入
-      Export // 导出
-    } = this.$route.meta
-    // const Edit = this.$route.meta.Edit || false // 修改
-    // const Create = this.$route.meta.Create || false // 创建
-    // const Delete = this.$route.meta.Delete || false // 删除
-    // const Audit = this.$route.meta.Edit || false // 审核
-    // const Import = this.$route.meta.Import || false // 导入
-    // const Export = this.$route.meta.Export || false // 导出
-    Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
-    Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
+    // /* 设置属性不能修改 相当于const  {value:{}}等价于 {value : {},writable : false,configurable : false,enumerable : false} */
+    // Object.defineProperty(this, 'UserRoles', { value: {} })
+    // var setterFunc = function (newVal) {
+    //   var err = '不允许修改值'
+    //   if (typeof (console) === 'undefined') {
+    //     alert(err)
+    //   } else {
+    //     console.log(err)
+    //   }
+    // }
+    // const {
+    //   Edit, // 修改
+    //   Create, // 创建
+    //   Delete, // 删除
+    //   Audit, // 审核
+    //   Import, // 导入
+    //   Export // 导出
+    // } = this.$route.meta
+    // Object.defineProperty(this.UserRoles, 'Edit', { configurable: false, get: function () { return Edit }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Create', { configurable: false, get: function () { return Create }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Delete', { configurable: false, get: function () { return Delete }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Audit', { configurable: false, get: function () { return Audit }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Import', { configurable: false, get: function () { return Import }, set: setterFunc })
+    // Object.defineProperty(this.UserRoles, 'Export', { configurable: false, get: function () { return Export }, set: setterFunc })
   }, // 相当于构造函数，渲染完dom后触发
   filters: { // v-bind可以使用，v-model 无效
+    getVueDataByStr: function (dataNameStr) {
+      return this[dataNameStr]
+    } // 通过string获取Vue数据(Created中修改this._f方法)
   }, // 数据过滤器
   data: function () {
     var tb = {
-      tbUrl: {
-        controller: 'a',
-        exportExcel: 'ExportExcel', // 导出Excel action
-        importExcel: 'Upload' // 导入Excel action
-      },
+      // tbUrl: {
+      //   controller: 'a',
+      //   exportExcel: 'ExportExcel', // 导出Excel action
+      //   importExcel: 'Upload' // 导入Excel action
+      // },
+      Title: this.title || '', // 页面名称
+      TabActiveName: '', // 选中tab名称
       AddNum: 0, // 新增序号
       method: 'post', // HTTP请求方法
       tbLoading: true, // 加载中
@@ -224,7 +228,8 @@ var cRUDMixin = {
       centerDialogVisible: false, // 弹出框是否打开
       dlgLoading: false, // 弹出框加载状态
       dlgfullscreen: false, // 弹出框全屏
-      formLabelWidth: this.formlabel_width || '120px',
+      formLabelWidth: this.formlabel_width || '120px', // Label宽度
+      label_position: this.formlabel_position || 'right', // Label排列位置
       tableData: [],
       UserRoles: {} // 权限
     }
@@ -248,7 +253,8 @@ var cRUDMixin = {
     tb.ArrFormField = [] // ArrFormField // 添加/编辑字段 通过此配置渲染
     tb.ArrListField = [] // ArrListField // table展示列 通过此配置渲染
     tb.ArrSearchField = [] // ArrSearchField // 搜索字段数据通过此配置渲染
-    tb.ArrTagEditField = [] // ArrTagEditField // 搜索字段数据通过此配置渲染
+    tb.ArrTagEditField = [] // ArrTagEditField // 数组字段数据通过此配置渲染
+    tb.ArrTabEditField = [] // ArrTabEditField // Tab展示字段数据通过此配置渲染
     // tb.valid_rules = valid_rules
     // el-select 搜索框数据
     tb.el_selt = {
@@ -259,7 +265,7 @@ var cRUDMixin = {
   }, // 数据集
   computed: { // 计算属性
     dgTitle: function () {
-      let dgTitle = this.title || ''
+      let dgTitle = this.Title || ''
       // debugger
       // this.UserRoles.Edit = false// 修改不了 writable 为 false 属性const化
       // Object.defineProperty(this.UserRoles,'Edit',{configurable:true,writable:true})
@@ -272,7 +278,7 @@ var cRUDMixin = {
       if (this.curr_rowdata.Id <= 0) {
         return `${dgTitle}新增`
       } else {
-        if (this.UserRoles.Edit) {
+        if (this.$route.meta.Edit) {
           return `${dgTitle}编辑`
         } else {
           return `${dgTitle}查看`
@@ -308,201 +314,12 @@ var cRUDMixin = {
     }
   }, // 监听属性变化
   methods: {
-    fieldsUpdate: function () {
-      let thisVue = this
-      thisVue.$set(thisVue, 'ArrEnumField', [])
-      thisVue.$set(thisVue, 'ArrFormField', [])
-      thisVue.$set(thisVue, 'ArrListField', [])
-      thisVue.$set(thisVue, 'ArrSearchField', [])
-      thisVue.$set(thisVue, 'ArrTagEditField', [])
-      let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
-      let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
-      let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
-      let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
-      let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
-      // 设置自定义列 覆盖Fields
-      if (!objIsEmpty(thisVue.CustomerFields)) {
-        Object.entries(thisVue.CustomerFields).forEach(([key, value]) => {
-          let OField = thisVue.Fields.filter(val => {
-            return val.Name === key
-          })
-          if (OField.length > 0) {
-            Object.assign(OField[0], value)
-          }
-        })
-      }
-      if (!objIsEmpty(thisVue.Fields)) {
-        // 列表/编辑/搜索 字段集合
-        thisVue.Fields.forEach((item, idx) => {
-          if (item.FormShow && !item.IsKey) {
-            ArrFormField.push(item)
-          }
-          if (item.FormOrder > 0) {
-            this.IsListOrder = true
-          }
-          if (item.ListShow && !item.IsKey) {
-            ArrListField.push(item)
-          }
-          if (item.IsListOrder > 0) {
-            this.IsListOrder = true
-          }
-          if (item.SearchShow && !item.IsKey) {
-            ArrSearchField.push(item)
-          }
-          if (item.SearchOrder > 0) {
-            this.IsSearchOrder = true
-          }
-          if (item.inputType === 'tagedit') {
-            ArrTagEditField.push(item)
-          }
-          if (item.IsForeignKey) {
-            ArrEnumField.push(item)
-          }
-        })
-      }
-      thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
-        thisVue.el_remoteMethod('', item, 'search', true)
-        thisVue.el_remoteMethod('', item, 'form', true)
-      })
-    }, // 赋值渲染然字段
-    el_FormFieldRules: function (rowConfig, isSearchForm) {
-      return elementExt.el_FormFieldRules.call(this, rowConfig, isSearchForm)
-      // // 是否搜索form
-      // var tIsSearchForm = typeof (isSearchForm)
-      // if (tIsSearchForm === 'undefined' || isSearchForm === null || tIsSearchForm !== 'boolean') {
-      //   isSearchForm = false
-      // }
-      // var ArrRules = []
-      // if (!rowConfig.Editable && !isSearchForm) {
-      //   return ArrRules
-      // }
-      // if (rowConfig.Required && !isSearchForm && rowConfig.Type !== 'boolean') {
-      //   ArrRules.push({ required: true, message: '请输入' + rowConfig.DisplayName || rowConfig.Name, trigger: ['blur', 'change'] })
-      // }
-      // var name = rowConfig.Name.toLowerCase()
-      // if (name === 'email' || rowConfig.isEmail) {
-      //   ArrRules.push({ type: 'email', message: '请输入正确的邮箱地址', trigger: ['blur', 'change'] })
-      // }
-      // if (name.indexOf('password') === 0) {
-      //   ArrRules.push({ validator: this.$Validtors.PasswordValidator, trigger: ['blur', 'change'] })
-      // }
-      // if (name.indexOf('idcard') === 0 && rowConfig.inputType === 'text') {
-      //   ArrRules.push({ validator: this.$Validtors.IdCardValidator, trigger: 'blur' })
-      // }
-      // if (rowConfig.MinLength || rowConfig.MaxLength) {
-      //   var rule = { trigger: ['blur', 'change'] }
-      //   if (rowConfig.MinLength) {
-      //     rule.min = rowConfig.MinLength
-      //     if (rowConfig.MaxLength) {
-      //       rule.message = '字符长度必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-      //     } else {
-      //       rule.message = '字符长度 必须大于 ' + rowConfig.MinLength
-      //     }
-      //   }
-      //   if (rowConfig.MaxLength) {
-      //     rule.max = rowConfig.MaxLength
-      //     if (rowConfig.MinLength) {
-      //       rule.message = '字符长度 必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-      //     } else {
-      //       rule.message = '字符长度 必须小于 ' + rowConfig.MaxLength
-      //     }
-      //   }
-      //   ArrRules.push(rule)
-      // }
-      // return ArrRules
-    }, // 输出input验证规则
-    el_inputType: function (rowConfig) {
-      var elInputType = 'input'
-      if (rowConfig.Type === 'number') {
-        elInputType = 'input-number'
-      }
-      if (rowConfig.Type === 'boolean') {
-        elInputType = 'checkbox'
-      }
-      if (rowConfig.Type === 'datetime') {
-        elInputType = 'date-picker'
-      }
-      if (rowConfig.inputType === 'tagedit') {
-        return 'TagEdit'
-      }
-      // ES5 模板替换
-      return `el-${elInputType}`// 'el-'+elInputType
-    }, // 判断input输出格式
-    el_inputProtoType: function (field, isSearchForm) { // el_input-Type属性
-      if (!field.Editable) {
-        return field.inputType
-      }
-      // 是否搜索form
-      var tisSearchForm = typeof (isSearchForm)
-      if (tisSearchForm === 'undefined' || isSearchForm === null || tisSearchForm !== 'boolean') {
-        isSearchForm = false
-      }
-      let filterData = isSearchForm ? this.filters.filterRules : this.curr_rowdata
-      if (objIsEmpty(filterData)) {
-        filterData = {}
-      }
-      let p = '$' + field.Name + 'inputType'
-      // 设置零时变量，记录$inputType
-      if (objIsEmpty(filterData[p])) {
-        if (field.inputType === 'datetime' && isSearchForm) {
-          return 'daterange'
-        } else {
-          return field.inputType
-        }
-      } else {
-        return filterData[p]
-      }
-    }, // el_input-Type属性
-    el_inputClass: function (field) {
-      if (field.Name.toLowerCase().indexOf('password') >= 0) {
-        let currRowData = this.curr_rowdata
-        let name = '$' + field.Name + 'pswView'
-        let inputClass = { 'fa-eye-slash': false, 'fa-eye': currRowData[name] }
-        if (currRowData[name] === undefined || currRowData[name] === null) {
-          inputClass['fa-eye-slash'] = true
-        } else {
-          inputClass['fa-eye-slash'] = !currRowData[name]
-          inputClass['fa-eye'] = currRowData[name]
-        }
-        return inputClass
-      } else {
-        return { 'el-icon-edit': true }
-      }
-    }, // password 显示/隐藏 class
-    pswView: function (field) { // 密码框 显示隐藏
-      var pswView = '$' + field.Name + 'pswView'
-      var inputType = '$' + field.Name + 'inputType'
-      if (this.curr_rowdata[pswView] === undefined || this.curr_rowdata[pswView] === null) {
-        this.$set(this.curr_rowdata, pswView, true)
-        this.$set(this.curr_rowdata, inputType, 'text')
-      } else if (!this.curr_rowdata[pswView]) {
-        this.curr_rowdata[pswView] = true
-        this.curr_rowdata[inputType] = 'text'
-      } else {
-        this.curr_rowdata[pswView] = false
-        this.curr_rowdata[inputType] = 'password'
-      }
-    }, // 密码框 显示隐藏
-    keydown: function (e) { // dom原生控件keydown事件 v-on:keydown.native='keydown'
-      return true
-      // var event = e || window.event // 事件
-      // var keycode = event.keycode || event.which // 键码
-      // // 取消事件冒泡(W3C)
-      // if (event && event.stopPropagation)
-      //   event.stopPropagation()
-      // else
-      //   // IE中取消事件冒泡
-      //   window.event.cancelBubble = true
-      // // 阻止默认浏览器动作(W3C)
-      // if (event && event.preventDefault)
-      //   event.preventDefault()
-      // else // IE中阻止函数器默认动作的方式
-      //   window.event.returnValue = false
-      // console.log('keydown', event, this)
-      // event.returnValue = false
-      // // window.event.returnValue = false
-      // return false
-    }, // dom原生控件keydown事件 v-on:keydown.native='keydown'
+    fieldsUpdate: elementExt.fieldsUpdate, // 赋值渲染然字段
+    el_FormFieldRules: elementExt.el_FormFieldRules, // 输出input验证规则
+    el_inputType: elementExt.el_inputType, // 判断input输出格式
+    el_inputProtoType: elementExt.el_inputProtoType, // el_input-Type属性
+    el_inputClass: elementExt.el_inputClass, // password 显示/隐藏 class
+    pswView: elementExt.pswView, // 密码框 显示隐藏
     tb_GetData: function (e) { // 获取数据
       let thisVue = this
       thisVue.tbLoading = true// 加载中
@@ -514,15 +331,19 @@ var cRUDMixin = {
       paramData.Searhfilter = JSON.stringify(SearchFilter)
       BaseApi.Get(paramData).then(function (res) { // 成功
         try {
+          let resType = typeof res
+          if (resType === 'string') {
+            res = JSON.parse(res)
+          }
           let { rows, total } = res
-          console.log(res)
+          // console.log(res)
           thisVue.tableData = rows
           thisVue.pagiNation.total = total
         } catch (e) {
           thisVue.$message({
             duration: 0, // 不自动关闭
             showClose: true,
-            message: '数据处理，出现错误',
+            message: `数据处理，出现错误${e}`,
             type: 'error'
           })
         }
@@ -608,11 +429,21 @@ var cRUDMixin = {
         //   }
         // }
       })
-      // 编辑数据-子数据集为空时，赋值[]
+      // 赋值删除&添加序号字段
       thisVue.ArrTagEditField.forEach(item => {
         let tagVal = thisVue.curr_rowdata[item.Name]
         if (objIsEmpty(tagVal)) {
           thisVue.curr_rowdata[item.Name] = []
+        }
+      })
+      // 赋值删除&添加序号字段
+      thisVue.ArrTabEditField.forEach(item => {
+        let tagVal = thisVue.curr_rowdata[item.Name]
+        if (objIsEmpty(tagVal)) {
+          thisVue.curr_rowdata[item.Name] = []
+          thisVue.curr_rowdata[item.Name].delData = [] // 记录删除数据
+          thisVue.curr_rowdata[item.Name].dlgVisible = false // 弹出状态
+          thisVue.curr_rowdata[item.Name].addNum = -1 // 记录新增序号
         }
       })
       // console.log('row-dblclick',row)
@@ -620,15 +451,23 @@ var cRUDMixin = {
     handleAddRow: function (e) {
       let thisVue = this
       // console.log('handleAddRow',e)
-      thisVue.centerDialogVisible = true
-      thisVue.curr_rowdata = { Id: --this.AddNum }
-      thisVue.dlgLoading = false
+      let newRow = { Id: --this.AddNum }
       // 赋值数据编辑新值
       thisVue.ArrTagEditField.forEach(field => {
         if (field.inputType === 'tagedit') {
-          thisVue.curr_rowdata[field.Name] = []
+          newRow[field.Name] = []
         }
       })
+      // 赋值删除&添加序号字段
+      thisVue.ArrTabEditField.forEach(tab => {
+        newRow[tab.Name] = []
+        newRow[tab.Name].delData = [] // 记录删除数据
+        newRow[tab.Name].dlgVisible = false // 弹出状态
+        newRow[tab.Name].addNum = -1 // 记录新增序号
+      })
+      thisVue.curr_rowdata = newRow
+      thisVue.centerDialogVisible = true
+      thisVue.dlgLoading = false
     }, // 增加行数据 弹出框添加
     deleteRow: function (index, row) {
       // this.tableData.splice(index, 1)
@@ -674,8 +513,10 @@ var cRUDMixin = {
         thisVue.tbLoading = true // 加载中
         let ArrDelPromiseFunc = [] // 记录删除数据方法
         thisVue.selctRows.forEach(item => {
-          let DelFunc = BaseApi.Delete(item.Id)
-          ArrDelPromiseFunc.push(DelFunc)
+          if (!objIsEmpty(item.Id) && item.Id > 0) {
+            let DelFunc = BaseApi.Delete(item.Id)
+            ArrDelPromiseFunc.push(DelFunc)
+          }
         })
         Promise.all(ArrDelPromiseFunc).then(ArrRes => {
           thisVue.tbLoading = false // 加载完毕
@@ -844,115 +685,21 @@ var cRUDMixin = {
     }, // 点击下一页触发事件
     // 翻页控件事件----
     // 导出 导入 Excel
-    ExportXls: function (JsonData, fileName) {
-      // console.log('ExportXls')
-      require(['xlsx', 'file-saver'], function (XLSX, FileSaver) {
-        var sheetName = '帐户'
-        let wb = XLSX.utils.book_new() // 工作簿对象包含一SheetNames数组，以及一个表对象映射表名称到表对象。XLSX.utils.book_new实用函数创建一个新的工作簿对象。
-        let ws = XLSX.utils.json_to_sheet(JsonData)
-        wb.SheetNames.push(sheetName)
-        wb.Sheets[sheetName] = ws
-        const defaultCellStyle = { font: { name: 'Verdana', sz: 13, color: 'FF00FF88' }, fill: { fgColor: { rgb: 'FFFFAA00' } } }// 设置表格的样式
-        let wopts = { bookType: 'xlsx', bookSST: false, type: 'binary', cellStyles: true, defaultCellStyle: defaultCellStyle, showGridLines: false } // 配置参数和样式
-        // let wb = XLSX.utils.table_to_book(thisVue.$refs['Mytb'])
-        /* get binary string as output */
-        let wbout = XLSX.write(wb, wopts)
-        try {
-          const s2ab = function (s) { // 字符串转字符流
-            if (typeof ArrayBuffer !== 'undefined') {
-              var buf = new ArrayBuffer(s.length)
-              var view = new Uint8Array(buf)
-              for (var i = 0; i !== s.length; ++i) view[i] = s.charCodeAt(i) & 0xff
-              return buf
-            } else {
-              var buff = new Array(s.length)
-              for (var x = 0; x !== s.length; ++x) buff[x] = s.charCodeAt(x) & 0xFF
-              return buff
-            }
-          }
-          FileSaver.saveAs(new Blob([s2ab(wbout)], { type: 'application/octet-stream' }), fileName + '.xlsx')
-        } catch (e) {
-          if (typeof console !== 'undefined') {
-            console.log(e, wbout)
-          }
-        }
-        return wbout
-      })
-    }, // 导出数据
+    ExportXls: elementExt.ExportXls, // 导出数据
     ImportXls: function () {
       // console.log('ImportXls')
     }, // 导入数据
-    formatter: function (field) { // el-table-column 数据显示转换
-      var formatter = null
-      switch (field.Type) {
-        case 'boolean':
-          formatter = this.$formatter.boolformatter
-          break
-        case 'date':
-          formatter = this.$formatter.dateformatter
-          break
-        case 'datetime':
-          formatter = this.$formatter.datetimeformatter
-          break
-        default:
-          formatter = null
-          break
-      }
-      var lowerName = field.Name.toLowerCase()
-      if (lowerName.indexOf('sex') === 0) {
-        formatter = this.$formatter.Sexformatter
-      }
-      if (!objIsEmpty(field.ForeignKeyGetListUrl)) {
-        formatter = this.$formatter.joinformatter
-      }
-      // if (lower_Name.indexOf('photo') >= 0){
-      //    formatter = this.$formatter.photoformatter
-      // }
-      return formatter
-    }, // el-table-column 数据显示转换
-    el_remoteMethod: function (query, field, profx, forceload) {
-      let thisVue = this
-      let ArrOptionName = field.Name + '_' + profx
-      if (!objIsEmpty(query) || !objIsEmpty(forceload)) {
-        thisVue.el_selt.el_selt_loading = true
-        var paramData = { Searhfilter: JSON.stringify([{ field: 'q', op: 'equals', value: query }]) }
-        let url = field.ForeignKeyGetListUrl// '/MenuItems/GetData'
-        BaseApi.Get(paramData, url).then(res => {
-          let { rows } = res
-          try {
-            if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
-              thisVue.$set(thisVue.el_selt, ArrOptionName, {})
-            }
-            if (objIsEmpty(rows)) {
-              thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', res)
-            } else {
-              thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', rows)
-            }
-          } catch (e) {
-            thisVue.$message({
-              duration: 0, // 不自动关闭
-              showClose: true,
-              message: '数据处理，出现错误',
-              type: 'error'
-            })
-          }
-          thisVue.el_selt.el_selt_loading = false// 加载完毕
-        }).catch(err => {
-          thisVue.el_selt.el_selt_loading = false// 加载完毕
-          thisVue.$message({
-            duration: 0, // 不自动关闭
-            showClose: true,
-            message: `获取数据出现错误:${err}`,
-            type: 'error'
-          })
-        })
-      } else {
-        if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
-          thisVue.el_selt[ArrOptionName] = {}
-        }
-        thisVue.el_selt[ArrOptionName]['ArrOption'] = []
-      }
-    } // 外键触发搜索
+    formatter: elementExt.formatter, // el-table-column 数据显示转换
+    el_remoteMethod: elementExt.el_remoteMethod, // 外键触发搜索
+    dlgOK_Func: function () {
+      console.log('dlgOK_Func')
+    }, // 子组件触发父组件
+    TabClick: function (tab, event) {
+      // console.log('TabClick', tab)
+      this.TabActiveName = tab.name
+      var tabObjComponent = this.curr_rowdata[tab.name]
+      tabObjComponent.dlgVisible = true // 设置异步组件显示
+    } // tab点击事件
   }
 }
 export default { cRUDMixin, BaseArrField, CustomerFields }

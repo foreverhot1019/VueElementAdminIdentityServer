@@ -25,7 +25,7 @@
             <el-table-column show-overflow-tooltip
               v-for="field in ArrListField"
               v-bind:key="field.Name"
-              v-bind:width="field.Width_List"
+              v-bind:width="field.Width_List||120"
               v-bind:sortable="field.Sortable?'custom':false"
               v-bind:prop="field.Name"
               v-bind:label="field.DisplayName"
@@ -53,7 +53,7 @@
           </el-col>
         </el-row>
       </div>
-      <el-form ref="OrderCuntomerForm" v-bind:model="OrderCuntomer" label-position="right" inline size="small">
+      <el-form ref="OrderCuntomerForm" v-bind:model="OrderCuntomer" v-bind:label-position="label_position" inline>
         <!--autocomplete-->
         <!-- <el-form-item v-bind:label-width="formLabelWidth" label="中文名" prop="NameChs"
            v-bind:rules="el_FormFieldRules({Name:'NameChs',DisplayName:'中文名',Required:true,Editable:true,MinLength:0,MaxLength:50})">
@@ -85,7 +85,7 @@
             v-bind:show-word-limit="(field.MaxLength||50)>0"
             v-bind:maxlength="field.MaxLength||50"
             v-bind:minlength="field.MinLength||50"
-            v-bind:style="{'width':field.Width_input+'px'}">
+            v-bind:style="{'width':(field.Width_input||178)+'px'}">
             <i slot="suffix" class="el-input__icon fa"
               v-if="field.Name.toLowerCase().indexOf('password')>=0"
               v-show="field.Name.toLowerCase().indexOf('password')>=0"
@@ -94,14 +94,15 @@
           </component>
           <component v-else-if="field.FormShow && field.inputType === 'tagedit'" v-bind:is="el_inputType(field)"
                      v-model="OrderCuntomer[field.Name]"
-                     v-bind:style="{'width':field.Width_input+'px'}"
+                     v-bind:style="{'width':(field.Width_input||178)+'px'}"
                      v-bind:editable="field.Editable">
           </component>
           <el-select v-else v-model="OrderCuntomer[field.Name]"
             reserve-keyword clearable
             v-bind:remote-method="q=>el_remoteMethod(q,field,'form')"
             v-bind:loading="el_selt.el_selt_loading"
-            v-bind:style="{'width':field.Width_input+'px'}">
+            v-bind:style="{'width':(field.Width_input||178)+'px'}"
+            v-bind:multiple="field.multiple">
             <template v-if="el_selt[field.Name+'_form']">
               <el-option v-for="item in el_selt[field.Name+'_form'].ArrOption"
                 v-bind:key="item.ID"
@@ -127,27 +128,29 @@ import elementExt from '@/utils/elementExtention'
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
-//   DisplayName: "授权币制",//显示名称
+//   Name: 'Currency', //名称
+//   DisplayName: '授权币制',//显示名称
+//   IsKey: true, //主键
 //   Editable: true, //可编辑
-//   ForeignKeyGetListUrl: '/PARA_CURRs/GetPagerPARA_CURR_FromCache', //获取外键数据Url
-//   FormOrder: 0, //Form排序
+//   Required: true, //必填
+//   Type: 'string', //'datetime/number/string/boolean';//类型-默认string
+//   inputType: 'text', //'password/datetime/text/tagedit/tabedit';//form中的input类型-默认text
+//   IsForeignKey: true, //外键渲染为Select
+//   multiple: true, //select多选
+//   ForeignKeyGetListUrl: '/api/GetPagerPARA_CURR_FromCache', //获取外键数据Url
+//   isEmail: true, //邮件格式
+//   FormOrder: 1, //Form排序
 //   FormShow: true, //Form中展示
-//   IsForeignKey: true, //外键
-//   IsKey: false, //主键
-//   ListOrder: 0, //列表排序
+//   ListOrder: 1, //列表排序
 //   ListShow: true, //列表展示
 //   MaxLength: 50, //最大长度
-//   MinLength: 0, //最小长度
-//   Name: "Currency", //名称
-//   //Type为number时，可设置小数位
-//   Required: false, //必填
-//   SearchOrder: 0, //搜索排序
+//   MinLength: 10, //最小长度
+//   Precision: 2 //小数位位数 //Type为number时，可设置小数位
+//   SearchOrder: 1, //搜索排序
 //   SearchShow: true, //搜索中展示
 //   Sortable: true, //是否可排序
-//   Type: "string", //"datetime/number/string/boolean";//类型
-//   Width_List: "120", //列表-列宽度 <=0 默认*，>0 此宽度为准
-//   Width_input: "178", //Form-input宽度 <=0 默认*，>0 此宽度为准
-//   inputType: "text", //"password/datetime/text/tagedit";//form中的input类型
+//   Width_List: '120', //列表-列宽度 <=0 默认*，>0 此宽度为准
+//   Width_input: '178', //Form-input宽度 <=0 默认*，>0 此宽度为准
 // }
 
 export default {
@@ -174,12 +177,17 @@ export default {
       type: String,
       default: '120px'
     },
+    formlabel_position: {
+      type: String,
+      default: 'right'
+    },
     CustomerFields: { // 自定义列数据(覆盖BaseArrField-ArrField行值)
       type: Object,
       required: false
     },
     Fields: { // 所有要渲染的字段
-      type: Array,
+      // eslint-disable-next-line vue/require-prop-type-constructor
+      type: Array || String,
       required: true
     }
   },
@@ -315,6 +323,7 @@ export default {
       tb_OrdCustomer_data: this.tbData, // 当前列表数据集合
       OrderCuntomer: {}, // 当前编辑数据
       formLabelWidth: this.formlabel_width, // Label宽度
+      label_position: this.formlabel_position, // Label排列位置
       DelData: this.delData, // 记录删除的数据
       UserRoles: {}, // 权限
       DialogVisible: false, // 弹出框显示
@@ -375,8 +384,26 @@ export default {
         })
       }
       if (!objIsEmpty(thisVue.Fields)) {
+        let ArrField
+        let Idx = 0 // 记录搜索层次
+        let MaxNum = 10 // 最大搜索10层
+        if (typeof thisVue.Fields === 'string') {
+          let _$parent = this.$parent
+          ArrField = _$parent[thisVue.Fields]
+          while (objIsEmpty(ArrField)) {
+            Idx++
+            if (Idx >= MaxNum) {
+              ArrField = []
+              break
+            }
+            _$parent = _$parent.$parent
+            ArrField = _$parent[thisVue.Fields]
+          }
+        } else {
+          ArrField = thisVue.Fields
+        }
         // 列表/编辑/搜索 字段集合
-        thisVue.Fields.forEach((item, idx) => {
+        ArrField.forEach((item, idx) => {
           if (item.FormShow && !item.IsKey) {
             ArrFormField.push(item)
           }
