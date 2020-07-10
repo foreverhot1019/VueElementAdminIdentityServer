@@ -104,8 +104,8 @@
             </el-row>
         </el-col>
     </el-row>
-    <!--弹出框-->
-    <el-dialog ref="MyDialog" width="60%" center v-el-drag-dialog
+    <!--弹出框 v-el-drag-dialog-->
+    <el-dialog ref="MyDialog" width="60%" center
       v-if="curr_rowdata !== null && JSON.stringify(curr_rowdata) !== '{}'"
       :visible.sync="centerDialogVisible"
       :fullscreen="dlgfullscreen"
@@ -128,7 +128,8 @@
                     v-bind:label="field.DisplayName"
                     v-bind:prop="field.Name"
                     v-bind:rules="el_FormFieldRules(field)">
-                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'" v-bind:is="el_inputType(field)"
+                <component v-if="!field.IsForeignKey && field.FormShow && field.inputType !== 'tagedit'"
+                           v-bind:is="el_inputType(field)"
                            v-bind:disabled="field.IsKey || (!field.Editable&&curr_rowdata.Id>0)"
                            v-model="curr_rowdata[field.Name]"
                            v-bind:prop="field.Name"

@@ -130,7 +130,7 @@ export default {
   }, // 判断input输出格式
   el_inputProtoType: function (field, isSearchForm) { // el_input-Type属性
     let inputType = field.inputType || 'text'
-    if (!field.Editable) {
+    if (!isSearchForm && !field.Editable) {
       return inputType
     }
     // 是否搜索form
