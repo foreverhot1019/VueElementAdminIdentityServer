@@ -1,24 +1,8 @@
 ﻿import { asyncRoutes, constantRoutes } from '@/router'
 import { objIsEmpty } from '@/utils'
-import Layout from '@/Layout'
-import LazyLoading from 'components/LazyLoading'
-// import ErrLoading from '@/components/LazyLoading/ErrLoading'
-// import Loading from '@/components/LazyLoading/Loading'
 
-// const AsyncLoadComponent = (ComponetPath) => ({
-//   // 需要加载的组件 (应该是一个 `Promise` 对象)
-//   // component: import(ComponetPath.indexOf('@') >= 0 ? ComponetPath : `@${ComponetPath}`),
-//   component: import(`@/views/${ComponetPath}`),
-//   // 异步组件加载时使用的组件
-//   loading: Loading,
-//   // 加载失败时使用的组件
-//   error: ErrLoading,
-//   // 展示加载时组件的延时时间。默认值是 200 (毫秒)
-//   delay: 200,
-//   // 如果提供了超时时间且组件加载也超时了，
-//   // 则使用加载失败时使用的组件。默认值是：`Infinity`
-//   timeout: 3000
-// })
+import LazyLoading from 'components/LazyLoading' // 异步加载
+// import LazyLoading, { LazyLoadingHandler, LazyLoadingObj } from 'components/LazyLoading' // 异步加载
 
 /**
  * 重新赋值 item.component
@@ -28,9 +12,10 @@ function resetComponet (item) {
   if (!objIsEmpty(item)) {
     let path = item.component
     if (path === 'Layout') {
-      item.component = Layout
+      item.component = () => LazyLoading(import('@/Layout'))
     } else {
-      item.component = LazyLoading(() => import(`@/views/${path}`))
+      item.component = () => LazyLoading(import(`@/views/${path}`))
+      // item.component = LazyLoadingHandler(() => import(`views/${path}`))
       // item.component = () => import(`@/views/${path}`)
     }
     // item.component = resolve => {

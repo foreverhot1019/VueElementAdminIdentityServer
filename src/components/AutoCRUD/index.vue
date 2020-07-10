@@ -105,8 +105,8 @@
             </el-row>
         </el-col>
     </el-row>
-    <!--弹出框-->
-    <el-dialog ref="MyDialog" width="60%" center v-el-drag-dialog
+    <!--弹出框v-el-drag-dialog-->
+    <el-dialog ref="MyDialog" width="67%" center
       v-if="curr_rowdata !== null && JSON.stringify(curr_rowdata) !== '{}'"
       v-loading="dlgLoading"
       v-bind:visible.sync="centerDialogVisible"
@@ -199,8 +199,7 @@
 import BaseApi from '@/axiosAPI/BaseApi'
 import MycRUDMixin from '@/Mixins/CRUDMixin'
 import { objIsEmpty } from '@/utils'
-// import TagEdit from '@/components/TagEdit' // 标签编辑展示
-// import LazyLoading from '@/components/LazyLoading' // 异步加载
+import LazyLoading from 'components/LazyLoading' // 异步加载
 
 let { cRUDMixin, CustomerFields } = MycRUDMixin
 
@@ -260,8 +259,8 @@ export default {
     }
   },
   components: {
-    TagEdit: () => import('components/TagEdit'), // 标签编辑展示
-    AutoCRUDLocal: () => import('components/AutoCRUDLocal') // 本地数据CRUD
+    TagEdit: () => LazyLoading(import('components/TagEdit')), // 标签编辑展示
+    AutoCRUDLocal: () => LazyLoading(import('components/AutoCRUDLocal')) // 本地数据CRUD
   },
   created: function () {
     console.log('AutoCrud---------')

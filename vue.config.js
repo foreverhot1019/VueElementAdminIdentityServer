@@ -137,6 +137,7 @@ module.exports = {
       .set('@', resolve('src'))
       .set('assets', resolve('src/assets'))
       .set('components', resolve('src/components'))
+      .set('views', resolve('src/views'))
     // 打包分析
     if (process.env.IS_ANALYZ) {
       config.plugin('webpack-report')

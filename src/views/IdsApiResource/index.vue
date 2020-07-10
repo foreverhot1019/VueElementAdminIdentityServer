@@ -203,9 +203,9 @@ import moment from 'moment'
 import BaseApi from '@/axiosAPI/BaseApi'
 import { objIsEmpty } from '@/utils'
 import elementExt from '@/utils/elementExtention'
-import { LazyLoadingFunc } from '@/components/LazyLoading' // 异步加载
-import ErrLoading from 'components/LazyLoading/ErrLoading'
-import Loading from 'components/LazyLoading/Loading'
+import LazyLoading from 'components/LazyLoading' // 异步加载
+// import ErrLoading from 'components/LazyLoading/ErrLoading'
+// import Loading from 'components/LazyLoading/Loading'
 
 // 渲染CRUD字段数据集
 let ArrField = [
@@ -296,8 +296,8 @@ let ApiSecretFields = [
 export default {
   name: 'IdsApiResource', // 页面名称（当组件引用时用到）
   components: {
-    TagEdit: LazyLoadingFunc(() => import('components/TagEdit')), // LazyLoading(() => import('components/TagEdit')), // 标签编辑展示
-    AutoCRUDLocal: LazyLoadingFunc(() => import('components/AutoCRUDLocal')) // LazyLoading(() => import('components/AutoCRUDLocal')) // 本地数据CRUD
+    TagEdit: () => LazyLoading(import('components/TagEdit')), // LazyLoading(() => import('components/TagEdit')), // 标签编辑展示
+    AutoCRUDLocal: () => LazyLoading(import('components/AutoCRUDLocal')) // LazyLoading(() => import('components/AutoCRUDLocal')) // 本地数据CRUD
   },
   directives: {}, // 注册局部指令
   created: function () {

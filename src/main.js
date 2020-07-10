@@ -23,7 +23,7 @@ import './utils/error-log' // error log
 import * as filters from './filters' // global filters
 import Validtors from './VueExtension/Validators' // global validators
 import formatters from './VueExtension/formatters' // global formatters
-import drag from '@/directive/el-drag-dialog' // global directive
+// import drag from '@/directive/el-drag-dialog' // global directive
 // import tabResize from '@/directive/el-table' // global directive
 
 /*
@@ -54,7 +54,7 @@ Vue.prototype.$Validtors = Validtors
 // register global utility formatters
 Vue.prototype.$formatter = formatters
 // register global utility directives
-drag.install(Vue)
+// drag.install(Vue)
 // tabResize.install(Vue)
 
 Vue.config.productionTip = false
