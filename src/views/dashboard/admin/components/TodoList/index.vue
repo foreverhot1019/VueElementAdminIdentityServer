@@ -62,7 +62,7 @@ export default {
     pluralize: (n, w) => n === 1 ? w : w + 's',
     capitalize: s => s.charAt(0).toUpperCase() + s.slice(1)
   },
-  data() {
+  data () {
     return {
       visibility: 'all',
       filters,
@@ -71,21 +71,21 @@ export default {
     }
   },
   computed: {
-    allChecked() {
+    allChecked () {
       return this.todos.every(todo => todo.done)
     },
-    filteredTodos() {
+    filteredTodos () {
       return filters[this.visibility](this.todos)
     },
-    remaining() {
+    remaining () {
       return this.todos.filter(todo => !todo.done).length
     }
   },
   methods: {
-    setLocalStorage() {
+    setLocalStorage () {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(this.todos))
     },
-    addTodo(e) {
+    addTodo (e) {
       const text = e.target.value
       if (text.trim()) {
         this.todos.push({
@@ -96,23 +96,23 @@ export default {
       }
       e.target.value = ''
     },
-    toggleTodo(val) {
+    toggleTodo (val) {
       val.done = !val.done
       this.setLocalStorage()
     },
-    deleteTodo(todo) {
+    deleteTodo (todo) {
       this.todos.splice(this.todos.indexOf(todo), 1)
       this.setLocalStorage()
     },
-    editTodo({ todo, value }) {
+    editTodo ({ todo, value }) {
       todo.text = value
       this.setLocalStorage()
     },
-    clearCompleted() {
+    clearCompleted () {
       this.todos = this.todos.filter(todo => !todo.done)
       this.setLocalStorage()
     },
-    toggleAll({ done }) {
+    toggleAll ({ done }) {
       this.todos.forEach(todo => {
         todo.done = done
         this.setLocalStorage()

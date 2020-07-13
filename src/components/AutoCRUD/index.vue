@@ -111,6 +111,7 @@
       v-loading="dlgLoading"
       v-bind:visible.sync="centerDialogVisible"
       v-bind:show-close="false"
+      :before-close="(done)=>{dlgClose(done)}"
       v-bind:fullscreen="dlgfullscreen">
       <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
         <el-row>
@@ -171,16 +172,18 @@
               <template v-for="tab in ArrTabEditField" >
                 <el-tab-pane v-bind:label="tab.DisplayName" v-bind:name="tab.Name" v-bind:key="tab.Name">
                   <AutoCRUDLocal v-bind:ref="tab.Name"
-                    v-if="curr_rowdata[tab.Name].dlgVisible"
+                    v-if="curr_rowdata[tab.Name+'_config'].dlgVisible"
                     v-bind:refFieldVal="curr_rowdata.Id.toString()"
                     v-bind:refFieldName="Fields[tab.Name+'Fields'].refFieldName"
                     v-model="curr_rowdata[tab.Name]"
-                    v-bind:delData="curr_rowdata[tab.Name].delData"
+                    v-bind:delData="curr_rowdata[tab.Name+'_config'].delData"
                     v-bind:Fields="Fields[tab.Name+'Fields']"
-                    v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
+                    v-on:dlgok_func="dlgOK_Func"
+                    v-on:updateData="curr_rowdataChange"></AutoCRUDLocal>
                     <!-- _self 获取vue实例 filters
                     v-bind:Fields="tab.Name+'Fields'|getVueDataByStr"
-                    v-bind:Fields="_self[tab.Name+'Fields'}" -->
+                    v-bind:Fields="$data[tab.Name+'Fields']"
+                    v-bind:Fields="_self[tab.Name+'Fields']" -->
                   <!--keep-alive 保持上次渲染时的状态
                   include: 字符串或正则表达式。只有匹配的组件会被缓存。
                   exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
@@ -189,7 +192,7 @@
           </el-tabs><!--Api范围/api密钥-->
       </el-form>
       <span slot="footer" class="dialog-footer"><!--底部按钮组-->
-          <el-button v-on:click="centerDialogVisible = false">取 消</el-button>
+          <el-button v-on:click="dlgClose">取 消</el-button>
           <el-button type="primary" v-bind:disabled="!$route.meta.Edit" v-on:click="dlgSubmit">确 定</el-button>
       </span>
     </el-dialog>
@@ -266,7 +269,7 @@ export default {
     console.log('AutoCrud---------')
     // 赋值渲染然字段
     // ArrEnumField/ArrFormField/ArrListField/ArrSearchField/ArrTagEditField/ArrTabEditField
-    this.fieldsUpdate()
+    // this.fieldsUpdate()
     let { CustomerFields: propCustomerFields, ControllerName } = this
     // 设置自定义数据
     if (!objIsEmpty(propCustomerFields)) {

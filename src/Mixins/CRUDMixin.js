@@ -2,6 +2,7 @@ import { objIsEmpty } from '@/utils'
 import BaseApi from '@/axiosAPI/BaseApi'
 import moment from 'moment'
 import elementExt from '@/utils/elementExtention'
+import _ from 'lodash'
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 let CustomerFields = {
@@ -397,19 +398,21 @@ var cRUDMixin = {
     }, // 行查看按钮
     handledblclick: function (row) {
       this.centerDialogVisible = true
-      this.curr_rowdata_Original = row// 原始行数据
-      this.curr_rowdata = Object.assign({}, row)
-      let currRowData = this.curr_rowdata
-      let ArrEnumField = this.ArrEnumField// 所有select/枚举
+      this.curr_rowdata_Original = row // 原始行数据
+      if (row[this.TabActiveName]) {
+        row[this.TabActiveName].dlgVisible = true
+      }
+      let _currRowData = this.curr_rowdata_Original
+      let ArrEnumField = this.ArrEnumField // 所有select/枚举
       let thisVue = this
-      Object.keys(this.curr_rowdata).forEach(function (item, index) {
-        let val = currRowData[item] + ''
+      Object.keys(_currRowData).forEach(function (item, index) {
+        let val = _currRowData[item] + ''
         if (!objIsEmpty(val)) {
           if (val.indexOf('/Date(') >= 0) {
             // eslint-disable-next-line new-cap
             var d = new moment(val)
             if (d.isValid()) {
-              currRowData[item] = d.toDate()
+              _currRowData[item] = d.toDate()
             }
           }
           var ArrFilter = ArrEnumField.filter(function (field) { return field.Name === item })
@@ -431,21 +434,35 @@ var cRUDMixin = {
       })
       // 赋值删除&添加序号字段
       thisVue.ArrTagEditField.forEach(item => {
-        let tagVal = thisVue.curr_rowdata[item.Name]
+        let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
-          thisVue.curr_rowdata[item.Name] = []
+          _currRowData[item.Name] = []
         }
       })
       // 赋值删除&添加序号字段
       thisVue.ArrTabEditField.forEach(item => {
-        let tagVal = thisVue.curr_rowdata[item.Name]
+        let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
-          thisVue.curr_rowdata[item.Name] = []
-          thisVue.curr_rowdata[item.Name].delData = [] // 记录删除数据
-          thisVue.curr_rowdata[item.Name].dlgVisible = false // 弹出状态
-          thisVue.curr_rowdata[item.Name].addNum = -1 // 记录新增序号
+          _currRowData[item.Name] = []
+        }
+        let conf = `${item.Name}_config`
+        if (objIsEmpty(_currRowData[conf])) {
+          _currRowData[conf] = {}
+          _currRowData[conf].delData = [] // 记录删除数据
+          _currRowData[conf].dlgVisible = false // 弹出状态
+          _currRowData[conf].addNum = -1 // 记录新增序号
+          // _currRowData[conf] = {
+          //   delData: [], // 记录删除数据
+          //   dlgVisible: false, // 弹出状态
+          //   addNum: -1 // 记录新增序号
+          // }
         }
       })
+      if (this.TabActiveName) {
+        let TabActive = _currRowData[`${this.TabActiveName}_config`]
+        TabActive.dlgVisible = true
+      }
+      this.curr_rowdata = _.defaultsDeep({}, _currRowData)
       // console.log('row-dblclick',row)
     }, // 双击行
     handleAddRow: function (e) {
@@ -461,10 +478,19 @@ var cRUDMixin = {
       // 赋值删除&添加序号字段
       thisVue.ArrTabEditField.forEach(tab => {
         newRow[tab.Name] = []
-        newRow[tab.Name].delData = [] // 记录删除数据
-        newRow[tab.Name].dlgVisible = false // 弹出状态
-        newRow[tab.Name].addNum = -1 // 记录新增序号
+        let conf = `${tab.Name}_config`
+        newRow[conf] = {}
+        newRow[conf].delData = [] // 记录删除数据
+        newRow[conf].dlgVisible = false // 弹出状态
+        newRow[conf].addNum = -1 // 记录新增序号
+        // newRow[tab.Name].delData = [] // 记录删除数据
+        // newRow[tab.Name].dlgVisible = false // 弹出状态
+        // newRow[tab.Name].addNum = -1 // 记录新增序号
       })
+      if (this.TabActiveName) {
+        let TabActive = newRow[`${this.TabActiveName}_config`]
+        TabActive.dlgVisible = true
+      }
       thisVue.curr_rowdata = newRow
       thisVue.centerDialogVisible = true
       thisVue.dlgLoading = false
@@ -589,8 +615,18 @@ var cRUDMixin = {
         }
       }
     }, // table排序变更
-    dlgClose: function () { // 弹出框关闭时触发
-      this.centerDialogVisible = false
+    dlgClose: function (doneFunc) { // 弹出框关闭时触发
+      if (typeof (doneFunc) === 'function') {
+        doneFunc()
+      } else {
+        this.centerDialogVisible = false
+      }
+      let currRowdata = this.curr_rowdata
+      this.ArrTabEditField.forEach(tab => {
+        currRowdata[tab.Name] = []
+        let conf = `${tab.Name}_config`
+        currRowdata[conf].dlgVisible = false // 弹出状态
+      })
       Object.assign(this.curr_rowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
     dlgSubmit: function (e) {
@@ -607,6 +643,11 @@ var cRUDMixin = {
             updated: []
           }
           let postData = thisVue.curr_rowdata
+          thisVue.$refs.el_Tab.each(tab => {
+            postData[tab.Name].delData = tab.DelData
+            postData[tab.Name].addNum = tab.addNum
+          })
+          console.log(postData)
           if (postData.Id <= 0) {
             batchSaveData.inserted.push(postData)
           } else {
@@ -646,8 +687,10 @@ var cRUDMixin = {
                   thisVue.pageCurrentChange(1)
                 }
               } else {
+                // 刷新数据
+                thisVue.tb_GetData()
                 // 更新原始数据，以便触发界面更新数据
-                Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
+                // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
               }
             }
           }).catch(ArrErr => { // 获取所有错误请求的结果
@@ -697,9 +740,14 @@ var cRUDMixin = {
     TabClick: function (tab, event) {
       // console.log('TabClick', tab)
       this.TabActiveName = tab.name
-      var tabObjComponent = this.curr_rowdata[tab.name]
+      let conf = `${this.TabActiveName}_config`
+      var tabObjComponent = this.curr_rowdata[conf]
       tabObjComponent.dlgVisible = true // 设置异步组件显示
-    } // tab点击事件
+    }, // tab点击事件
+    curr_rowdataChange: function (newdata) {
+      // this.curr_rowdata = newdata
+      console.log(this.curr_rowdata, newdata)
+    }
   }
 }
 export default { cRUDMixin, BaseArrField, CustomerFields }

@@ -4,12 +4,12 @@ import BaseApi from '@/axiosAPI/BaseApi'
 export default {
   fieldsUpdate: function () {
     let thisVue = this
-    thisVue.$set(thisVue, 'ArrEnumField', [])
-    thisVue.$set(thisVue, 'ArrFormField', [])
-    thisVue.$set(thisVue, 'ArrListField', [])
-    thisVue.$set(thisVue, 'ArrSearchField', [])
-    thisVue.$set(thisVue, 'ArrTagEditField', [])
-    thisVue.$set(thisVue, 'ArrTabEditField', [])
+    // thisVue.$set(thisVue, 'ArrEnumField', [])
+    // thisVue.$set(thisVue, 'ArrFormField', [])
+    // thisVue.$set(thisVue, 'ArrListField', [])
+    // thisVue.$set(thisVue, 'ArrSearchField', [])
+    // thisVue.$set(thisVue, 'ArrTagEditField', [])
+    // thisVue.$set(thisVue, 'ArrTabEditField', [])
     let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
     let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
     let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
@@ -316,7 +316,11 @@ export default {
   }, // el-table-column 数据显示转换
   el_remoteMethod: function (query, field, profx, forceload) {
     let thisVue = this
-    let ArrOptionName = field.Name + '_' + profx
+    let ArrOptionName = []
+    // 分解profx 多个相同数据集 搜索一次
+    profx.split(',').forEach(item => {
+      ArrOptionName.push(field.Name + '_' + item)
+    })
     if (!objIsEmpty(query) || !objIsEmpty(forceload)) {
       thisVue.el_selt.el_selt_loading = true
       var paramData = { Searhfilter: JSON.stringify([{ field: 'q', op: 'equals', value: query }]) }
@@ -324,14 +328,16 @@ export default {
       BaseApi.Get(paramData, url).then(res => {
         let { rows } = res
         try {
-          if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
-            thisVue.$set(thisVue.el_selt, ArrOptionName, {})
-          }
-          if (objIsEmpty(rows)) {
-            thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', res)
-          } else {
-            thisVue.$set(thisVue.el_selt[ArrOptionName], 'ArrOption', rows)
-          }
+          ArrOptionName.forEach(OptionName => {
+            if (typeof thisVue.el_selt[OptionName] === 'undefined') {
+              thisVue.$set(thisVue.el_selt, OptionName, {})
+              if (objIsEmpty(rows)) {
+                thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', res)
+              } else {
+                thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', rows)
+              }
+            }
+          })
         } catch (e) {
           thisVue.$message({
             duration: 0, // 不自动关闭
@@ -351,10 +357,12 @@ export default {
         })
       })
     } else {
-      if (typeof thisVue.el_selt[ArrOptionName] === 'undefined') {
-        thisVue.el_selt[ArrOptionName] = {}
-      }
-      thisVue.el_selt[ArrOptionName]['ArrOption'] = []
+      ArrOptionName.forEach(OptionName => {
+        if (typeof thisVue.el_selt[OptionName] === 'undefined') {
+          thisVue.el_selt[OptionName] = {}
+        }
+        thisVue.el_selt[OptionName]['ArrOption'] = []
+      })
     }
   } // 外键触发搜索
 }

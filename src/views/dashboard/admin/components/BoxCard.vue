@@ -35,7 +35,7 @@ export default {
   components: { PanThumb, Mallki },
 
   filters: {
-    statusFilter(status) {
+    statusFilter (status) {
       const statusMap = {
         success: 'success',
         pending: 'danger'
@@ -43,7 +43,7 @@ export default {
       return statusMap[status]
     }
   },
-  data() {
+  data () {
     return {
       statisticsData: {
         article_count: 1024,

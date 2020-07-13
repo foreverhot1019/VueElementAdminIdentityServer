@@ -173,7 +173,7 @@ export default {
           this.$store.dispatch('user/login', this.loginForm)
             .then(() => {
               console.info('handleLogin', this)
-              this.$router.push({ path: this.redirect || '/', query: this.otherQuery })
+              this.$router.push({ path: this.redirect || '/MyMenu/Home', query: this.otherQuery })
               this.loading = false
             })
             .catch(() => {

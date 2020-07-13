@@ -125,6 +125,7 @@ import moment from 'moment'
 import { objIsEmpty } from '@/utils'
 import TagEdit from '@/components/TagEdit' // 标签编辑展示
 import elementExt from '@/utils/elementExtention'
+import _ from 'lodash'
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
@@ -291,6 +292,11 @@ export default {
       handler: (newval, oldval) => {
         // console.log('watch-delData', newval, oldval)
         this.DelData = objIsEmpty(newval) ? [] : newval
+        // if (!objIsEmpty(newval)) {
+        //   this.DelData = newval
+        // } else {
+        //   // this.DelData = []
+        // }
       }
       // true:在 wacth 里声明了之后，就会立即先去执行里面的handler方法
       // false:不会在绑定的时候就执行。
@@ -322,6 +328,7 @@ export default {
       OrderId: this.refFieldVal, // 订单Id
       tb_OrdCustomer_data: this.tbData, // 当前列表数据集合
       OrderCuntomer: {}, // 当前编辑数据
+      OrderCuntomer_Original: {}, // 当前编辑数据原始
       formLabelWidth: this.formlabel_width, // Label宽度
       label_position: this.formlabel_position, // Label排列位置
       DelData: this.delData, // 记录删除的数据
@@ -360,81 +367,7 @@ export default {
     return data
   },
   methods: {
-    fieldsUpdate: function () {
-      let thisVue = this
-      thisVue.$set(thisVue, 'ArrEnumField', [])
-      thisVue.$set(thisVue, 'ArrFormField', [])
-      thisVue.$set(thisVue, 'ArrListField', [])
-      thisVue.$set(thisVue, 'ArrSearchField', [])
-      thisVue.$set(thisVue, 'ArrTagEditField', [])
-      let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
-      let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
-      let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
-      let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
-      let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
-      // 设置自定义列 覆盖Fields
-      if (!objIsEmpty(thisVue.CustomerFields)) {
-        Object.entries(thisVue.CustomerFields).forEach(([key, value]) => {
-          let OField = thisVue.Fields.filter(val => {
-            return val.Name === key
-          })
-          if (OField.length > 0) {
-            Object.assign(OField[0], value)
-          }
-        })
-      }
-      if (!objIsEmpty(thisVue.Fields)) {
-        let ArrField
-        let Idx = 0 // 记录搜索层次
-        let MaxNum = 10 // 最大搜索10层
-        if (typeof thisVue.Fields === 'string') {
-          let _$parent = this.$parent
-          ArrField = _$parent[thisVue.Fields]
-          while (objIsEmpty(ArrField)) {
-            Idx++
-            if (Idx >= MaxNum) {
-              ArrField = []
-              break
-            }
-            _$parent = _$parent.$parent
-            ArrField = _$parent[thisVue.Fields]
-          }
-        } else {
-          ArrField = thisVue.Fields
-        }
-        // 列表/编辑/搜索 字段集合
-        ArrField.forEach((item, idx) => {
-          if (item.FormShow && !item.IsKey) {
-            ArrFormField.push(item)
-          }
-          if (item.FormOrder > 0) {
-            this.IsListOrder = true
-          }
-          if (item.ListShow && !item.IsKey) {
-            ArrListField.push(item)
-          }
-          if (item.IsListOrder > 0) {
-            this.IsListOrder = true
-          }
-          if (item.SearchShow && !item.IsKey) {
-            ArrSearchField.push(item)
-          }
-          if (item.SearchOrder > 0) {
-            this.IsSearchOrder = true
-          }
-          if (item.inputType === 'tagedit') {
-            ArrTagEditField.push(item)
-          }
-          if (item.IsForeignKey) {
-            ArrEnumField.push(item)
-          }
-        })
-      }
-      thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
-        thisVue.el_remoteMethod('', item, 'search', true)
-        thisVue.el_remoteMethod('', item, 'form', true)
-      })
-    }, // 赋值渲染然字段
+    fieldsUpdate: elementExt.fieldsUpdate, // 赋值渲染然字段
     el_FormFieldRules: elementExt.el_FormFieldRules, //  输出input验证规则// 赋值渲染然字段
     el_inputType: elementExt.el_inputType, // 判断input输出格式
     el_inputProtoType: elementExt.el_inputProtoType, // el_input-Type属性
@@ -442,7 +375,7 @@ export default {
     pswView: elementExt.pswView, // 密码框 显示隐藏
     handleAddRow: function (e) {
       console.log('handleAddRow', e)
-      var newRow = { Id: --this.addNum } // 主键字段赋值
+      var newRow = { Id: --this.addNum, _New: true } // 主键字段赋值
       newRow[this.refFieldName] = this.refFieldVal // 关联字段赋值
       // 赋值数据编辑新值
       this.ArrTagEditField.forEach(field => {
@@ -456,13 +389,14 @@ export default {
       this.DialogVisible = true
       this.OrderCuntomer = newRow
       this.dlgLoading = false// 编辑弹出框加载中
-      this.tb_OrdCustomer_data.push(newRow)
-      this.tb_OrdCustomer_data.addNum = this.addNum// 记录上次添加数-<keep-alive>
+      // this.tb_OrdCustomer_data.push(newRow)
+      // this.tb_OrdCustomer_data.addNum = this.addNum// 记录上次添加数-<keep-alive>
     }, // 增加行数据 弹出框添加
     handledblclick: function (row) {
       this.DialogVisible = true
-      this.OrderCuntomer = row
-      let currRowdata = this.OrderCuntomer
+      this.OrderCuntomer_Original = row
+      this.OrderCuntomer = _.defaultsDeep({}, row) // 深拷贝
+      let currRowdata = this.OrderCuntomer // _.deepClone(this.OrderCuntomer)
       let thisVue = this
       Object.keys(currRowdata).forEach(function (item, index) {
         let val = currRowdata[item] + ''
@@ -534,10 +468,13 @@ export default {
           deltRowIndex.forEach(function (ArrIdx) {
             let KeyId = thisVue.tb_OrdCustomer_data[ArrIdx].Id
             thisVue.tb_OrdCustomer_data.splice(ArrIdx, 1)
-            thisVue.DelData.push(KeyId)// 记录删除数据
-            thisVue.tb_OrdCustomer_data.delData.push(KeyId)// 记录删除数据
+            thisVue.delData.push(KeyId)// 记录删除数据
+            // thisVue.tb_OrdCustomer_data.delData.push(KeyId)// 记录删除数据
           })
           thisVue.$emit('chang', thisVue.tb_OrdCustomer_data)// 触发 v-model 修改
+          // console.log(thisVue, thisVue.tb_OrdCustomer_data)
+          thisVue.$emit('updateData', thisVue.tb_OrdCustomer_data)// 回调父组件自定义方法
+          // thisVue.$emit('curr_rowdataChange', thisVue.tb_OrdCustomer_data)
         }
         thisVue.tbLoading = false// 加载中
       }
@@ -551,10 +488,19 @@ export default {
       MyForm.validate(function (valid) {
         if (valid) {
           thisVue.$emit('chang', thisVue.tb_OrdCustomer_data)// 触发 v-model 修改
+          if (thisVue.OrderCuntomer._New) {
+            thisVue.tb_OrdCustomer_data.push(thisVue.OrderCuntomer)
+            thisVue.OrderCuntomer._New = false
+          } else {
+            // 更新原始数据，触发数据更新
+            Object.assign(thisVue.OrderCuntomer_Original, thisVue.OrderCuntomer)
+          }
+          thisVue.tb_OrdCustomer_data.addNum = thisVue.addNum// 记录上次添加数-<keep-alive>
           // 关闭弹出框
           thisVue.DialogVisible = false
           thisVue.$emit('dlgok_func')// 回调父组件自定义方法
         } else {
+          return false
         }
       })
     },
@@ -572,14 +518,25 @@ export default {
       MyForm.clearValidate()// 清除验证
       MyForm.validate(function (valid) {
         if (valid) {
+          thisVue.OrderCuntomer._New = false
+          // 更新原始数据，触发数据更新
+          // Object.assign(thisVue.OrderCuntomer_Original, thisVue.OrderCuntomer)
           thisVue.DialogVisible = false
           thisVue.$emit('dlgok_func')// 触发父组件事件
         } else {
-          thisVue.$confirm(`${thisVue.dgTitle}验证错误, 强制新增?`, '提示', {
+          thisVue.$confirm(`${thisVue.dgTitle}验证错误, 强制${(thisVue.OrderCuntomer._New ? '新增' : '编辑')}?`, '提示', {
             confirmButtonText: '确定',
             cancelButtonText: '取消',
             type: 'warning'
           }).then(function () {
+            if (thisVue.OrderCuntomer._New) {
+              thisVue.tb_OrdCustomer_data.push(thisVue.OrderCuntomer)
+              thisVue.OrderCuntomer._New = false
+            } else {
+              // 更新原始数据，触发数据更新
+              Object.assign(thisVue.OrderCuntomer_Original, thisVue.OrderCuntomer)
+            }
+            thisVue.tb_OrdCustomer_data.addNum = thisVue.addNum// 记录上次添加数-<keep-alive>
             if (typeof (doneFunc) === 'function') {
               doneFunc()
             } else {
@@ -592,17 +549,17 @@ export default {
             } else {
               thisVue.DialogVisible = false
             }
-            var OrderCuntomer = thisVue.OrderCuntomer
-            var delIndex = null
-            thisVue.tb_OrdCustomer_data.forEach(function (item, idx) {
-              if (item.Id === OrderCuntomer.Id) {
-                delIndex = idx
-                return false
-              }
-            })
-            if (delIndex != null) {
-              thisVue.tb_OrdCustomer_data.splice(delIndex, 1)
-            }
+            // var OrderCuntomer = thisVue.OrderCuntomer
+            // var delIndex = null
+            // thisVue.tb_OrdCustomer_data.forEach(function (item, idx) {
+            //   if (item.Id === OrderCuntomer.Id) {
+            //     delIndex = idx
+            //     return false
+            //   }
+            // })
+            // if (delIndex != null) {
+            //   thisVue.tb_OrdCustomer_data.splice(delIndex, 1)
+            // }
           })
         }
       })

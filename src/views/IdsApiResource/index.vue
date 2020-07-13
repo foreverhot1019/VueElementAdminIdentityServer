@@ -110,6 +110,7 @@
       :visible.sync="centerDialogVisible"
       :fullscreen="dlgfullscreen"
       v-loading="dlgLoading"
+      :before-close="(done)=>{dlgClose(done)}"
       :show-close="false">
       <div slot="title" @dblclick="dlgfullscreen = !dlgfullscreen" class="el-dialog__title" style="">
         <el-row>
@@ -167,33 +168,35 @@
                 </el-select>
           </el-form-item>
           <el-tabs v-model="TabActiveName" ref="el_Tab" type="border-card" v-on:tab-click="TabClick">
-              <el-tab-pane label="Api范围" name="Scopes">
+              <el-tab-pane label="Api范围" name="Scopes" lazy>
                 <AutoCRUDLocal ref="Scopes"
-                  v-if="curr_rowdata['Scopes'].dlgVisible"
+                  v-if="curr_rowdata['Scopes_config'].dlgVisible"
                   v-bind:refFieldVal="curr_rowdata.Id.toString()"
                   refFieldName="ApiResourceId"
                   v-model="curr_rowdata['Scopes']"
-                  v-bind:delData="curr_rowdata['Scopes'].delData"
-                  v-bind:Fields="ApiScopeFields"
-                  v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
+                  v-bind:delData="curr_rowdata['Scopes_config'].delData"
+                  v-bind:Fields="$data['ApiScopeFields']"
+                  v-on:dlgok_func="dlgOK_Func"
+                  v-on:updateData="curr_rowdataChange"></AutoCRUDLocal>
                 <!--keep-alive 保持上次渲染时的状态
                 include: 字符串或正则表达式。只有匹配的组件会被缓存。
                 exclude: 字符串或正则表达式。任何匹配的组件都不会被缓存。-->
               </el-tab-pane>
-              <el-tab-pane label="Api密钥" name="ApiSecrets">
+              <el-tab-pane label="Api密钥" name="ApiSecrets" lazy>
                 <AutoCRUDLocal ref="ApiSecrets"
-                  v-if="curr_rowdata['ApiSecrets'].dlgVisible"
+                  v-if="curr_rowdata['ApiSecrets_config'].dlgVisible"
                   v-bind:refFieldVal="curr_rowdata.Id.toString()"
                   refFieldName="ApiResourceId"
                   v-model="curr_rowdata['ApiSecrets']"
-                  v-bind:delData="curr_rowdata['ApiSecrets'].delData"
-                  v-bind:Fields="ApiSecretFields"
-                  v-on:dlgok_func="dlgOK_Func"></AutoCRUDLocal>
+                  v-bind:delData="curr_rowdata['ApiSecrets_config'].delData"
+                  v-bind:Fields="$data['ApiSecretFields']"
+                  v-on:dlgok_func="dlgOK_Func"
+                  v-on:updateData="curr_rowdataChange"></AutoCRUDLocal>
               </el-tab-pane>
           </el-tabs><!--Api范围/api密钥-->
       </el-form>
       <span slot="footer" class="dialog-footer"><!--底部按钮组-->
-        <el-button @click="centerDialogVisible = false">取 消</el-button>
+        <el-button @click="dlgClose">取 消</el-button>
         <el-button type="primary" v-bind:disabled="!$route.meta.Edit" @click="dlgSubmit">确 定</el-button>
       </span>
     </el-dialog>
@@ -205,6 +208,7 @@ import BaseApi from '@/axiosAPI/BaseApi'
 import { objIsEmpty } from '@/utils'
 import elementExt from '@/utils/elementExtention'
 import LazyLoading from 'components/LazyLoading' // 异步加载
+import _ from 'lodash'
 // import ErrLoading from 'components/LazyLoading/ErrLoading'
 // import Loading from 'components/LazyLoading/Loading'
 
@@ -535,18 +539,18 @@ export default {
     handledblclick: function (row) {
       this.centerDialogVisible = true
       this.curr_rowdata_Original = row// 原始行数据
-      this.curr_rowdata = Object.assign({}, row)
-      let currRowData = this.curr_rowdata
+      this.curr_rowdata = _.defaultsDeep({}, row)
+      let _currRowData = this.curr_rowdata
       let ArrEnumField = this.ArrEnumField// 所有select/枚举
       let thisVue = this
-      Object.keys(this.curr_rowdata).forEach(function (item, index) {
-        let val = currRowData[item] + ''
+      Object.keys(_currRowData).forEach(function (item, index) {
+        let val = _currRowData[item] + ''
         if (!objIsEmpty(val)) {
           if (val.indexOf('/Date(') >= 0) {
             // eslint-disable-next-line new-cap
             var d = new moment(val)
             if (d.isValid()) {
-              currRowData[item] = d.toDate()
+              _currRowData[item] = d.toDate()
             }
           }
           var ArrFilter = ArrEnumField.filter(function (field) { return field.Name === item })
@@ -567,21 +571,36 @@ export default {
       })
       // 赋值删除
       thisVue.ArrTagEditField.forEach(item => {
-        let tagVal = thisVue.curr_rowdata[item.Name]
+        let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
-          thisVue.curr_rowdata[item.Name] = []
+          _currRowData[item.Name] = []
         }
       })
       // 赋值删除&添加序号字段
       thisVue.ArrTabEditField.forEach(item => {
-        let tagVal = thisVue.curr_rowdata[item.Name]
+        let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
-          thisVue.curr_rowdata[item.Name] = []
+          tagVal = []
         }
-        thisVue.curr_rowdata[item.Name].delData = [] // 记录删除数据
-        thisVue.curr_rowdata[item.Name].dlgVisible = false // 弹出状态
-        thisVue.curr_rowdata[item.Name].addNum = -1 // 记录新增序号
+        let conf = `${item.Name}_config`
+        if (objIsEmpty(_currRowData[conf])) {
+          _currRowData[conf] = {}
+          _currRowData[conf].delData = [] // 记录删除数据
+          _currRowData[conf].dlgVisible = false // 弹出状态
+          _currRowData[conf].addNum = -1 // 记录新增序号
+          // _currRowData[conf] = {
+          //   delData: [], // 记录删除数据
+          //   dlgVisible: false, // 弹出状态
+          //   addNum: -1 // 记录新增序号
+          // }
+        }
       })
+      // thisVue.TabActiveName = ''
+      if (this.TabActiveName) {
+        let TabActive = _currRowData[`${this.TabActiveName}_config`]
+        TabActive.dlgVisible = true
+      }
+      console.log('_currRowData', _currRowData)
       // console.log('row-dblclick',row)
     }, // 双击行
     handleAddRow: function (e) {
@@ -597,10 +616,23 @@ export default {
       // 赋值删除&添加序号字段
       thisVue.ArrTabEditField.forEach(tab => {
         newRow[tab.Name] = []
-        newRow[tab.Name].delData = [] // 记录删除数据
-        newRow[tab.Name].dlgVisible = false // 弹出状态
-        newRow[tab.Name].addNum = -1 // 记录新增序号
+        let conf = `${tab.Name}_config`
+        newRow[conf] = {}
+        newRow[conf].delData = [] // 记录删除数据
+        newRow[conf].dlgVisible = false // 弹出状态
+        newRow[conf].addNum = -1 // 记录新增序号
+        // newRow[conf] = {
+        //   delData= [], // 记录删除数据
+        //   dlgVisible: num <= 1, // 弹出状态
+        //   addNum: -1 // 记录新增序号
+        // }
       })
+      console.log('newRow', newRow)
+      // thisVue.TabActiveName = ''
+      if (this.TabActiveName) {
+        let TabActive = newRow[`${this.TabActiveName}_config`]
+        TabActive.dlgVisible = true
+      }
       thisVue.curr_rowdata = newRow
       thisVue.centerDialogVisible = true
       thisVue.dlgLoading = false
@@ -723,9 +755,19 @@ export default {
         }
       }
     }, // table排序变更
-    dlgClose: function () { // 弹出框关闭时触发
-      this.centerDialogVisible = false
-      Object.assign(this.curr_rowdata, this.curr_rowdata_Original)
+    dlgClose: function (doneFunc) { // 弹出框关闭时触发
+      if (typeof (doneFunc) === 'function') {
+        doneFunc()
+      } else {
+        this.centerDialogVisible = false
+      }
+      let currRowdata = this.curr_rowdata
+      this.ArrTabEditField.forEach(tab => {
+        currRowdata[tab.Name] = []
+        let conf = `${tab.Name}_config`
+        currRowdata[conf].dlgVisible = false // 弹出状态
+      })
+      Object.assign(currRowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
     dlgSubmit: function (e) {
       let thisVue = this
@@ -780,8 +822,10 @@ export default {
                   thisVue.pageCurrentChange(1)
                 }
               } else {
+                // 刷新数据
+                thisVue.tb_GetData()
                 // 更新原始数据，以便触发界面更新数据
-                Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
+                // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
               }
             }
           }).catch(ArrErr => { // 获取所有错误请求的结果
@@ -834,9 +878,14 @@ export default {
     TabClick: function (tab, event) {
       // console.log('TabClick',tab);
       this.TabActiveName = tab.name
-      var tabObjComponent = this.curr_rowdata[tab.name]
+      let conf = `${this.TabActiveName}_config`
+      var tabObjComponent = this.curr_rowdata[conf]
       tabObjComponent.dlgVisible = true // 设置异步组件显示
-    } // tab点击事件
+    }, // tab点击事件
+    curr_rowdataChange: function (newdata) {
+      // this.curr_rowdata.Scopes = newdata
+      console.log(this.curr_rowdata, newdata)
+    }
   }
 }
 </script>
