@@ -1,5 +1,6 @@
 import { objIsEmpty } from '@/utils'
 import BaseApi from '@/axiosAPI/BaseApi'
+import _ from 'lodash'
 
 export default {
   fieldsUpdate: function () {
@@ -90,24 +91,26 @@ export default {
       ArrRules.push({ validator: this.$Validtors.IdCardValidator, trigger: 'blur' })
     }
     if (Type === 'string' && (rowConfig.MinLength || rowConfig.MaxLength)) {
-      var rule = { trigger: ['blur', 'change'] }
-      if (rowConfig.MinLength) {
-        rule.min = rowConfig.MinLength
-        if (rowConfig.MaxLength) {
-          rule.message = '字符长度必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-        } else {
-          rule.message = '字符长度 必须大于 ' + rowConfig.MinLength
-        }
-      }
-      if (rowConfig.MaxLength) {
-        rule.max = rowConfig.MaxLength
+      if (inputType !== 'tagedit' && inputType !== 'tabedit') {
+        var rule = { trigger: ['blur', 'change'] }
         if (rowConfig.MinLength) {
-          rule.message = '字符长度 必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
-        } else {
-          rule.message = '字符长度 必须小于 ' + rowConfig.MaxLength
+          rule.min = rowConfig.MinLength
+          if (rowConfig.MaxLength) {
+            rule.message = '字符长度必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
+          } else {
+            rule.message = '字符长度 必须大于 ' + rowConfig.MinLength
+          }
         }
+        if (rowConfig.MaxLength) {
+          rule.max = rowConfig.MaxLength
+          if (rowConfig.MinLength) {
+            rule.message = '字符长度 必须介于 ' + rowConfig.MinLength + ' 到 ' + rowConfig.MaxLength + ' 之间'
+          } else {
+            rule.message = '字符长度 必须小于 ' + rowConfig.MaxLength
+          }
+        }
+        ArrRules.push(rule)
       }
-      ArrRules.push(rule)
     }
     return ArrRules
   }, // 输出input验证规则
@@ -329,13 +332,13 @@ export default {
         let { rows } = res
         try {
           ArrOptionName.forEach(OptionName => {
-            if (typeof thisVue.el_selt[OptionName] === 'undefined') {
+            if (objIsEmpty(thisVue.el_selt[OptionName])) {
               thisVue.$set(thisVue.el_selt, OptionName, {})
-              if (objIsEmpty(rows)) {
-                thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', res)
-              } else {
-                thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', rows)
-              }
+            }
+            if (objIsEmpty(rows)) {
+              thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', res)
+            } else {
+              thisVue.$set(thisVue.el_selt[OptionName], 'ArrOption', rows)
             }
           })
         } catch (e) {
@@ -358,11 +361,38 @@ export default {
       })
     } else {
       ArrOptionName.forEach(OptionName => {
-        if (typeof thisVue.el_selt[OptionName] === 'undefined') {
+        if (objIsEmpty(thisVue.el_selt[OptionName])) {
           thisVue.el_selt[OptionName] = {}
+          thisVue.el_selt[OptionName]['ArrOption'] = []
         }
-        thisVue.el_selt[OptionName]['ArrOption'] = []
       })
     }
-  } // 外键触发搜索
+  }, // 外键触发搜索
+  getSubmitData () { // 获取提交数据
+    // 处理特殊数据格式如dictionary,带select得Array
+    let thisVue = this
+    let MyForm = this.$refs['MyForm']
+    var batchSaveData = { // 批量操作数据
+      inserted: [],
+      deleted: [],
+      updated: []
+    }
+    // MyForm.resetFields()// 清除验证
+    MyForm.clearValidate()// 清除验证
+    MyForm.validate(function (valid) {
+      if (valid) {
+        let postData = _.defaultsDeep({}, thisVue.curr_rowdata)
+        console.log('dlgSubmit', postData)
+        if (postData.Id <= 0) {
+          batchSaveData.inserted.push(postData)
+        } else {
+          batchSaveData.updated.push(postData)
+        }
+      } else {
+        console.log('error submit!!')
+        return false
+      }
+    })
+    return batchSaveData
+  } // 获取提交数据
 }

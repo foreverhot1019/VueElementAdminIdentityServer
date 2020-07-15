@@ -458,11 +458,8 @@ var cRUDMixin = {
           // }
         }
       })
-      if (this.TabActiveName) {
-        let TabActive = _currRowData[`${this.TabActiveName}_config`]
-        TabActive.dlgVisible = true
-      }
       this.curr_rowdata = _.defaultsDeep({}, _currRowData)
+      this.SetTabActiveByName() // 根据上次活动Tab名称-设置Tab活动
       // console.log('row-dblclick',row)
     }, // 双击行
     handleAddRow: function (e) {
@@ -487,13 +484,10 @@ var cRUDMixin = {
         // newRow[tab.Name].dlgVisible = false // 弹出状态
         // newRow[tab.Name].addNum = -1 // 记录新增序号
       })
-      if (this.TabActiveName) {
-        let TabActive = newRow[`${this.TabActiveName}_config`]
-        TabActive.dlgVisible = true
-      }
       thisVue.curr_rowdata = newRow
       thisVue.centerDialogVisible = true
       thisVue.dlgLoading = false
+      this.SetTabActiveByName() // 根据上次活动Tab名称-设置Tab活动
     }, // 增加行数据 弹出框添加
     deleteRow: function (index, row) {
       // this.tableData.splice(index, 1)
@@ -629,85 +623,66 @@ var cRUDMixin = {
       })
       Object.assign(this.curr_rowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
+    getSubmitData: elementExt.getSubmitData, // 获取提交数据
     dlgSubmit: function (e) {
       let thisVue = this
-      let MyForm = this.$refs['MyForm']
-      // MyForm.resetFields()// 清除验证
-      MyForm.clearValidate()// 清除验证
-      MyForm.validate(function (valid) {
-        if (valid) {
-          thisVue.dlgLoading = true// 弹出框加载中
-          var batchSaveData = { // 批量操作数据
-            inserted: [],
-            deleted: [],
-            updated: []
-          }
-          let postData = thisVue.curr_rowdata
-          thisVue.$refs.el_Tab.each(tab => {
-            postData[tab.Name].delData = tab.DelData
-            postData[tab.Name].addNum = tab.addNum
+      var batchSaveData = this.getSubmitData()
+      if (batchSaveData) {
+        thisVue.dlgLoading = true// 弹出框加载中
+        let ArrPromiseFunc = [] // 记录异步方法
+        batchSaveData.inserted.forEach((item, index) => {
+          item.Id = item.Id + ''
+          let AddFunc = BaseApi.Add(item)
+          ArrPromiseFunc.push(AddFunc)
+        })
+        batchSaveData.updated.forEach((item, index) => {
+          let EditFunc = BaseApi.Edit(item.Id, item)
+          ArrPromiseFunc.push(EditFunc)
+        })
+        Promise.all(ArrPromiseFunc).then(ArrRes => {
+          thisVue.dlgLoading = false // 弹出框加载完毕
+          let errSome = ArrRes.filter(val => {
+            return !val.Success
+          }).map(val => {
+            return val.ErrMsg
           })
-          console.log(postData)
-          if (postData.Id <= 0) {
-            batchSaveData.inserted.push(postData)
-          } else {
-            batchSaveData.updated.push(postData)
-          }
-          let ArrPromiseFunc = [] // 记录异步方法
-          batchSaveData.inserted.forEach((item, index) => {
-            item.Id = item.Id + ''
-            let AddFunc = BaseApi.Add(item)
-            ArrPromiseFunc.push(AddFunc)
-          })
-          batchSaveData.updated.forEach((item, index) => {
-            let EditFunc = BaseApi.Edit(item.Id, item)
-            ArrPromiseFunc.push(EditFunc)
-          })
-          Promise.all(ArrPromiseFunc).then(ArrRes => {
-            thisVue.dlgLoading = false // 弹出框加载完毕
-            let errSome = ArrRes.filter(val => {
-              return !val.Success
-            }).map(val => {
-              return val.ErrMsg
-            })
-            if (errSome.length > 0) {
-              thisVue.$message({
-                duration: 0, // 不自动关闭
-                showClose: true,
-                message: '提交错误:' + errSome.join(';'),
-                type: 'error'
-              })
-            } else {
-              thisVue.centerDialogVisible = false // 显示/关闭弹出框
-              // 新增数据时，重新获取数据
-              if (thisVue.curr_rowdata.Id <= 0) {
-                if (thisVue.pagiNation.currentPage === 1) {
-                  thisVue.tb_GetData()
-                } else {
-                  thisVue.pageCurrentChange(1)
-                }
-              } else {
-                // 刷新数据
-                thisVue.tb_GetData()
-                // 更新原始数据，以便触发界面更新数据
-                // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
-              }
-            }
-          }).catch(ArrErr => { // 获取所有错误请求的结果
-            let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
-            thisVue.dlgLoading = false // 弹出框加载完毕
+          if (errSome.length > 0) {
             thisVue.$message({
               duration: 0, // 不自动关闭
               showClose: true,
-              message: `提交错误:${ErrMsg}`,
+              message: '提交错误:' + errSome.join(';'),
               type: 'error'
             })
+          } else {
+            // thisVue.centerDialogVisible = false // 显示/关闭弹出框
+            this.dlgClose() // 关闭弹出框并停止渲染Tab-panel数据
+            // 新增数据时，重新获取数据
+            if (thisVue.curr_rowdata.Id <= 0) {
+              if (thisVue.pagiNation.currentPage === 1) {
+                thisVue.tb_GetData()
+              } else {
+                thisVue.pageCurrentChange(1)
+              }
+            } else {
+              // 刷新数据
+              thisVue.tb_GetData()
+              // 更新原始数据，以便触发界面更新数据
+              // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
+            }
+          }
+        }).catch(ArrErr => { // 获取所有错误请求的结果
+          let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
+          thisVue.dlgLoading = false // 弹出框加载完毕
+          thisVue.$message({
+            duration: 0, // 不自动关闭
+            showClose: true,
+            message: `提交错误:${ErrMsg}`,
+            type: 'error'
           })
-        } else {
-          console.log('error submit!!')
-          return false
-        }
-      })
+        })
+      } else {
+        return false
+      }
     }, // 弹出框提交数据
     // ----翻页控件事件
     pageSizeChange: function (pageSize) {
@@ -737,6 +712,20 @@ var cRUDMixin = {
     dlgOK_Func: function () {
       console.log('dlgOK_Func')
     }, // 子组件触发父组件
+    SetTabActiveByName () { // 根据上次活动Tab名称-设置Tab活动
+      let row = this.curr_rowdata
+      if (this.TabActiveName) {
+        let TabActive = row[`${this.TabActiveName}_config`]
+        if (!TabActive && !isNaN(this.TabActiveName)) {
+          let tabName = this.$refs.el_Tab.panes[this.TabActiveName].name
+          TabActive = row[`${tabName}_config`]
+          this.TabActiveName = tabName
+        }
+        if (TabActive) {
+          TabActive.dlgVisible = true
+        }
+      }
+    },
     TabClick: function (tab, event) {
       // console.log('TabClick', tab)
       this.TabActiveName = tab.name

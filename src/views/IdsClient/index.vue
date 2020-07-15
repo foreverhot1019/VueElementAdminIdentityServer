@@ -35,37 +35,41 @@ import AutoCRUD from '@/components/AutoCRUD' // AutoCRUD组件
 // 渲染CRUD字段数据集
 let _ArrField = [
   { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'ClientId', DisplayName: '客户端ID', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ClientName', DisplayName: '名称', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Width_List: '50', Editable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
+  // select选择框
+  { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedGrantTypes' },
+  { Name: 'AllowedScopes', DisplayName: '允许范围', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedScopes' },
+  { Name: 'AccessTokenType', DisplayName: '访问令牌类型', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ClientUri', DisplayName: 'Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'LogoLUri', DisplayName: 'LogoLUri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Updated', DisplayName: '更新时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'LastAccessed', DisplayName: '最后访问时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'IdentityTokenLifetime', DisplayName: '身份令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AccessTokenLifetime', DisplayName: '访问令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'UpdateAccessTokenClaimsOnRefresh', DisplayName: '刷新时更新访问令牌票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'UserSsoLifetime', DisplayName: '用户SSO寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'UserCodeType', DisplayName: '用户码类型', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowOfflineAccess', DisplayName: '允许离线登录', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'RequireConsent', DisplayName: '需要同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'AllowRememberConsent', DisplayName: '允许记住同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'AuthorizationCodeLifetime', DisplayName: '授权码寿命', Type: 'number', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'ConsentLifetime', DisplayName: '同意寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'AbsoluteRefreshTokenLifetime', DisplayName: '绝对刷新令牌的寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'SlidingRefreshTokenLifetime', DisplayName: '滑动刷新令牌的寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'RefreshTokenUsage', DisplayName: '刷新令牌用法', Type: 'number', Editable: true, FormShow: true, ListShow: true },
-  { Name: 'UpdateAccessTokenClaimsOnRefresh', DisplayName: '刷新时更新访问令牌票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'RefreshTokenExpiration', DisplayName: '刷新令牌过期时间', Type: 'number', Editable: true, FormShow: true, ListShow: true },
-  { Name: 'AccessTokenType', DisplayName: '访问令牌类型', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'EnableLocalLogin', DisplayName: '启用本地登录', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'AccessTokenLifetime', DisplayName: '访问令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
+  { Name: 'DeviceCodeLifetime', DisplayName: '设备代码寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'IncludeJwtId', DisplayName: '加入JwtId', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'AlwaysSendClientClaims', DisplayName: '总是发送客户端票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'ClientClaimsPrefix', DisplayName: '票根前缀', Editable: true, FormShow: true, ListShow: true },
   { Name: 'PairWiseSubjectSalt', DisplayName: '配对主题盐', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
-  { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
-  { Name: 'Updated', DisplayName: '更新时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
-  { Name: 'LastAccessed', DisplayName: '最后访问时间', Type: 'datetime', inputType: 'datetime', Editable: false, SearchShow: true, FormShow: true, ListShow: true },
-  { Name: 'UserSsoLifetime', DisplayName: '用户SSO寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
-  { Name: 'UserCodeType', DisplayName: '用户码类型', Editable: true, FormShow: true, ListShow: true },
-  { Name: 'IdentityTokenLifetime', DisplayName: '身份令牌寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
-  { Name: 'AllowOfflineAccess', DisplayName: '允许离线登录', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true },
-  { Name: 'ClientId', DisplayName: '客户端ID', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'ProtocolType', DisplayName: '协议类型', Editable: true, FormShow: true, ListShow: true },
   { Name: 'RequireClientSecret', DisplayName: '需要客户端密码', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'ClientName', DisplayName: '名称', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
-  { Name: 'ClientUri', DisplayName: 'Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
-  { Name: 'LogoLUri', DisplayName: 'LogoLUri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
-  { Name: 'RequireConsent', DisplayName: '需要同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'AllowRememberConsent', DisplayName: '允许记住同意', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'AlwaysIncludeUserClaimsInIdToken', DisplayName: 'IdToken总是加入用户票据', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'RequirePkce', DisplayName: '需要Pkce', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'AllowPlainTextPkce', DisplayName: '允许纯文本Pkce', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
@@ -74,11 +78,7 @@ let _ArrField = [
   { Name: 'FrontChannelLogoutSessionRequired', DisplayName: '需要前通道注销会话', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'BackChannelLogoutUri', DisplayName: '反向通道注销Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
   { Name: 'BackChannelLogoutSessionRequired', DisplayName: '需要反向通道注销会话', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  { Name: 'DeviceCodeLifetime', DisplayName: '设备代码寿命', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'NonEditable', DisplayName: '不可编辑', Type: 'boolean', Required: true, Editable: true, FormShow: true, ListShow: true },
-  // select选择框
-  { Name: 'AllowedScopes', DisplayName: '允许范围', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedScopes' },
-  { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Editable: true, FormShow: true, IsForeignKey: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedGrantTypes' },
   // tagEdit字段
   { Name: 'IdentityProviderRestrictions', DisplayName: '允许客户端身份提供者', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
   { Name: 'AllowedCorsOrigins', DisplayName: '允许跨域地址', Width_input: '378', MaxLength: 100, inputType: 'tagedit', Editable: true, FormShow: true },
@@ -126,6 +126,35 @@ export default {
       title: '客户端',
       Fields: _ArrField,
       controllerName: 'ClientManage' // CRUD控制器
+    }
+  },
+  methods: {
+    getSubmitData () { // 获取提交数据
+      let thisVue = this
+      let MyForm = this.$refs['MyForm']
+      var batchSaveData = { // 批量操作数据
+        inserted: [],
+        deleted: [],
+        updated: []
+      }
+      // MyForm.resetFields()// 清除验证
+      MyForm.clearValidate()// 清除验证
+      MyForm.validate(function (valid) {
+        if (valid) {
+          let postData = thisVue.curr_rowdata
+          postData.AllowedGrantTypes = postData.AllowedGrantTypes.split(',')
+          console.log('dlgSubmit', postData)
+          if (postData.Id <= 0) {
+            batchSaveData.inserted.push(postData)
+          } else {
+            batchSaveData.updated.push(postData)
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+      return batchSaveData
     }
   }
 }

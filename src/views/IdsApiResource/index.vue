@@ -168,6 +168,17 @@
                 </el-select>
           </el-form-item>
           <el-tabs v-model="TabActiveName" ref="el_Tab" type="border-card" v-on:tab-click="TabClick">
+              <el-tab-pane label="属性" name="Properties" lazy>
+                <AutoCRUDLocal ref="Properties"
+                  v-if="curr_rowdata['Properties_config'].dlgVisible"
+                  v-bind:refFieldVal="curr_rowdata.Id.toString()"
+                  refFieldName="ApiResourceId"
+                  v-model="curr_rowdata['Properties']"
+                  v-bind:delData="curr_rowdata['Properties_config'].delData"
+                  v-bind:Fields="_self['PropertiesFields']"
+                  v-on:dlgok_func="dlgOK_Func"
+                  v-on:updateData="curr_rowdataChange"></AutoCRUDLocal>
+              </el-tab-pane>
               <el-tab-pane label="Api范围" name="Scopes" lazy>
                 <AutoCRUDLocal ref="Scopes"
                   v-if="curr_rowdata['Scopes_config'].dlgVisible"
@@ -214,38 +225,45 @@ import _ from 'lodash'
 
 // 渲染CRUD字段数据集
 let ArrField = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Name', DisplayName: '名称', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Enabled', DisplayName: '启用', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'NonEditable', DisplayName: '空编辑', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Updated', DisplayName: '更新时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'UserClaims', DisplayName: 'Api票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Scopes', DisplayName: 'Api范围', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tabedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiSecrets', DisplayName: 'Api密钥', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tabedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true, Sortable: true },
+  { Name: 'Name', DisplayName: '名称', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, ListOrder: 1, SearchOrder: 1, FormOrder: 1 },
+  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, ListOrder: 3, SearchOrder: 3, FormOrder: 3, },
+  { Name: 'Description', DisplayName: '描述', Sortable: false, Editable: true, FormShow: true, ListShow: true, ListOrder: 4, SearchOrder: 4, FormOrder: 4 },
+  { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
+  { Name: 'NonEditable', DisplayName: '空编辑', Type: 'boolean', Required: true, Sortable: false, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
+  { Name: 'Created', DisplayName: '创建时间', Width_List: '137', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 5, SearchOrder: 2, FormOrder: 5 },
+  { Name: 'Updated', DisplayName: '更新时间', Width_List: '137', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 5, SearchOrder: 2, FormOrder: 5 },
+  { Name: 'LastAccessed', DisplayName: '最后登录时间', Width_List: '137', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 5, SearchOrder: 2, FormOrder: 5 },
+  { Name: 'UserClaims', DisplayName: 'Api票根', Width_input: '378', inputType: 'tagedit', Sortable: false, Editable: true, FormShow: true, FormOrder: 5 },
+  { Name: 'Scopes', DisplayName: 'Api范围', Width_input: '378', inputType: 'tabedit', Sortable: false, Editable: true, FormOrder: 6 },
+  { Name: 'ApiSecrets', DisplayName: 'Api密钥', Width_input: '378', inputType: 'tabedit', Sortable: false, Editable: true, FormOrder: 6 },
+  { Name: 'Properties', DisplayName: '属性', Width_input: '378', inputType: 'tabedit', Editable: true }
+]
+let PropertiesFields = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'Key', DisplayName: '键', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 100 },
+  { Name: 'ApiResourceId', DisplayName: 'Api资源', Type: 'number', Required: true }
 ]
 let ApiScopeFields = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Name', DisplayName: '名称', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Required', DisplayName: '必须', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Emphasize', DisplayName: '强调范围', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ShowInDiscoveryDocument', DisplayName: '服务发现', Width_List: '120', Width_input: '178', Type: 'boolean', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 2, SearchOrder: 2, FormOrder: 2, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'UserClaims', DisplayName: '用户票根', Width_List: '120', Width_input: '378', Type: 'string', Precision: null, inputType: 'tagedit', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_List: '120', Width_input: '378', Type: 'number', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true, Sortable: true },
+  { Name: 'Name', DisplayName: '名称', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, ListOrder: 1, SearchOrder: 1, FormOrder: 1 },
+  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, ListOrder: 3, SearchOrder: 3, FormOrder: 3 },
+  { Name: 'Description', DisplayName: '描述', Sortable: false, Editable: true, FormShow: true, ListShow: true, ListOrder: 4, SearchOrder: 4, FormOrder: 4 },
+  { Name: 'Required', DisplayName: '必须', Type: 'boolean', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
+  { Name: 'Emphasize', DisplayName: '强调范围', Type: 'boolean', Required: true, Sortable: false, Editable: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
+  { Name: 'ShowInDiscoveryDocument', DisplayName: '服务发现', Type: 'boolean', Required: true, Sortable: false, Editable: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
+  { Name: 'UserClaims', DisplayName: '用户票根', Width_input: '378', inputType: 'tagedit', Sortable: false, Editable: true, FormShow: true, FormOrder: 5 },
+  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_input: '378', Type: 'number', Required: true, Sortable: false, FormOrder: 6 }
 ]
 let ApiSecretFields = [
-  { Name: 'Id', DisplayName: 'Id', Width_List: '120', Width_input: '178', Type: 'number', Precision: null, inputType: 'text', IsKey: true, Required: false, Sortable: true, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 0, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Description', DisplayName: '描述', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: false, Sortable: false, Editable: true, SearchShow: false, FormShow: true, ListShow: true, MaxLength: 1000, MinLength: 0, ListOrder: 4, SearchOrder: 4, FormOrder: 4, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Value', DisplayName: '值', Width_List: '120', Width_input: '178', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 2000, MinLength: 0, ListOrder: 1, SearchOrder: 1, FormOrder: 1, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Expiration', DisplayName: '过期时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Type', DisplayName: '类型', Width_List: '200', Width_input: '278', Type: 'string', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, MinLength: 0, ListOrder: 3, SearchOrder: 3, FormOrder: 3, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'Created', DisplayName: '创建时间', Width_List: '120', Width_input: '178', Type: 'datetime', Precision: null, inputType: 'datetime', IsKey: false, Required: false, Sortable: true, Editable: false, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 0, MinLength: 0, ListOrder: 5, SearchOrder: 2, FormOrder: 5, IsForeignKey: false, ForeignKeyGetListUrl: null },
-  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_List: '120', Width_input: '378', Type: 'number', Precision: null, inputType: 'text', IsKey: false, Required: true, Sortable: false, Editable: false, SearchShow: false, FormShow: false, ListShow: false, MaxLength: 0, MinLength: 0, ListOrder: 0, SearchOrder: 0, FormOrder: 6, IsForeignKey: false, ForeignKeyGetListUrl: null }
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true, Sortable: true },
+  { Name: 'Description', DisplayName: '描述', Sortable: false, Editable: true, FormShow: true, ListShow: true, MaxLength: 1000, ListOrder: 4, SearchOrder: 4, FormOrder: 4 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 2000, ListOrder: 1, SearchOrder: 1, FormOrder: 1 },
+  { Name: 'Expiration', DisplayName: '过期时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 5, SearchOrder: 2, FormOrder: 5 },
+  { Name: 'Type', DisplayName: '类型', Width_List: '200', Width_input: '278', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, ListOrder: 3, SearchOrder: 3, FormOrder: 3 },
+  { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 5, SearchOrder: 2, FormOrder: 5 },
+  { Name: 'ApiResourceId', DisplayName: 'Api资源', Width_input: '378', Type: 'number', Required: true, Sortable: false, FormOrder: 6 }
 ]
 
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
@@ -253,18 +271,18 @@ let ApiSecretFields = [
 //   DisplayName: "授权币制",//显示名称
 //   Editable: true, //可编辑
 //   ForeignKeyGetListUrl: '/PARA_CURRs/GetPagerPARA_CURR_FromCache', //获取外键数据Url
-//   FormOrder: 0, //Form排序
+//   //Form排序
 //   FormShow: true, //Form中展示
 //   IsForeignKey: true, //外键
-//   IsKey: false, //主键
-//   ListOrder: 0, //列表排序
+//   //主键
+//   //列表排序
 //   ListShow: true, //列表展示
 //   MaxLength: 50, //最大长度
-//   MinLength: 0, //最小长度
+//   //最小长度
 //   Name: "Currency", //名称
 //   //Type为number时，可设置小数位
-//   Required: false, //必填
-//   SearchOrder: 0, //搜索排序
+//   //必填
+//   //搜索排序
 //   SearchShow: true, //搜索中展示
 //   Sortable: true, //是否可排序
 //   Type: "string", //"datetime/number/string/boolean";//类型
@@ -389,6 +407,7 @@ export default {
     tb.ArrTabEditField = [] // ArrTabEditField // Tab展示字段数据通过此配置渲染
     // tb.valid_rules = valid_rules
     // el-select 搜索框数据
+    tb.PropertiesFields = PropertiesFields
     tb.ApiScopeFields = ApiScopeFields
     tb.ApiSecretFields = ApiSecretFields
     tb.el_selt = {
@@ -538,10 +557,12 @@ export default {
     }, // 行查看按钮
     handledblclick: function (row) {
       this.centerDialogVisible = true
-      this.curr_rowdata_Original = row// 原始行数据
-      this.curr_rowdata = _.defaultsDeep({}, row)
-      let _currRowData = this.curr_rowdata
-      let ArrEnumField = this.ArrEnumField// 所有select/枚举
+      this.curr_rowdata_Original = row // 原始行数据
+      if (row[this.TabActiveName]) {
+        row[this.TabActiveName].dlgVisible = true
+      }
+      let _currRowData = this.curr_rowdata_Original
+      let ArrEnumField = this.ArrEnumField // 所有select/枚举
       let thisVue = this
       Object.keys(_currRowData).forEach(function (item, index) {
         let val = _currRowData[item] + ''
@@ -563,13 +584,14 @@ export default {
           }
         }
         // } else {
+        //   // 数据为空时判断是不是
         //   var qArrTagEdit = thisVue.ArrTagEditField.filter(function (field) { return field.Name === item })
         //   if (qArrTagEdit.length > 0) {
         //     currRowData[item] = []
         //   }
         // }
       })
-      // 赋值删除
+      // 赋值删除&添加序号字段
       thisVue.ArrTagEditField.forEach(item => {
         let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
@@ -580,7 +602,7 @@ export default {
       thisVue.ArrTabEditField.forEach(item => {
         let tagVal = _currRowData[item.Name]
         if (objIsEmpty(tagVal)) {
-          tagVal = []
+          _currRowData[item.Name] = []
         }
         let conf = `${item.Name}_config`
         if (objIsEmpty(_currRowData[conf])) {
@@ -595,13 +617,8 @@ export default {
           // }
         }
       })
-      // thisVue.TabActiveName = ''
-      if (this.TabActiveName) {
-        let TabActive = _currRowData[`${this.TabActiveName}_config`]
-        TabActive.dlgVisible = true
-      }
-      console.log('_currRowData', _currRowData)
-      // console.log('row-dblclick',row)
+      this.curr_rowdata = _.defaultsDeep({}, _currRowData)
+      this.SetTabActiveByName() // 根据上次活动Tab名称-设置Tab活动
     }, // 双击行
     handleAddRow: function (e) {
       let thisVue = this
@@ -628,14 +645,10 @@ export default {
         // }
       })
       console.log('newRow', newRow)
-      // thisVue.TabActiveName = ''
-      if (this.TabActiveName) {
-        let TabActive = newRow[`${this.TabActiveName}_config`]
-        TabActive.dlgVisible = true
-      }
       thisVue.curr_rowdata = newRow
       thisVue.centerDialogVisible = true
       thisVue.dlgLoading = false
+      this.SetTabActiveByName() // 根据上次活动Tab名称-设置Tab活动
     }, // 增加行数据 弹出框添加
     deleteRow: function (index, row) {
       // this.tableData.splice(index, 1)
@@ -769,80 +782,98 @@ export default {
       })
       Object.assign(currRowdata, this.curr_rowdata_Original)
     }, // 弹出框关闭时触发
-    dlgSubmit: function (e) {
+    // getSubmitData: elementExt.getSubmitData, // 获取提交数据
+    getSubmitData () { // 获取提交数据
       let thisVue = this
       let MyForm = this.$refs['MyForm']
+      var batchSaveData = { // 批量操作数据
+        inserted: [],
+        deleted: [],
+        updated: []
+      }
       // MyForm.resetFields()// 清除验证
       MyForm.clearValidate()// 清除验证
       MyForm.validate(function (valid) {
         if (valid) {
-          thisVue.dlgLoading = true// 弹出框加载中
-          var batchSaveData = { // 批量操作数据
-            inserted: [],
-            deleted: [],
-            updated: []
-          }
-          let postData = thisVue.curr_rowdata
+          let postData = _.defaultsDeep({}, thisVue.curr_rowdata)
+          // 处理特殊数据格式如dictionary,带select得Array
+          let dictProperties = {}
+          postData.Properties.forEach(item => {
+            dictProperties[item.Key] = item.Value
+          })
+          postData.Properties = dictProperties
+          console.log('dlgSubmit', postData)
           if (postData.Id <= 0) {
             batchSaveData.inserted.push(postData)
           } else {
             batchSaveData.updated.push(postData)
           }
-          let ArrPromiseFunc = [] // 记录异步方法
-          batchSaveData.inserted.forEach((item, index) => {
-            item.Id = item.Id + ''
-            let AddFunc = BaseApi.Add(item)
-            ArrPromiseFunc.push(AddFunc)
-          })
-          batchSaveData.updated.forEach((item, index) => {
-            let EditFunc = BaseApi.Edit(item.Id, item)
-            ArrPromiseFunc.push(EditFunc)
-          })
-          Promise.all(ArrPromiseFunc).then(ArrRes => {
-            thisVue.dlgLoading = false // 弹出框加载完毕
-            let errSome = ArrRes.filter(val => {
-              return !val.Success
-            }).map(val => {
-              return val.ErrMsg
-            })
-            if (errSome.length > 0) {
-              thisVue.$message({
-                duration: 0, // 不自动关闭
-                showClose: true,
-                message: '提交错误:' + errSome.join(';'),
-                type: 'error'
-              })
-            } else {
-              thisVue.centerDialogVisible = false // 显示/关闭弹出框
-              // 新增数据时，重新获取数据
-              if (thisVue.curr_rowdata.Id <= 0) {
-                if (thisVue.pagiNation.currentPage === 1) {
-                  thisVue.tb_GetData()
-                } else {
-                  thisVue.pageCurrentChange(1)
-                }
-              } else {
-                // 刷新数据
-                thisVue.tb_GetData()
-                // 更新原始数据，以便触发界面更新数据
-                // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
-              }
-            }
-          }).catch(ArrErr => { // 获取所有错误请求的结果
-            let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
-            thisVue.dlgLoading = false // 弹出框加载完毕
-            thisVue.$message({
-              duration: 0, // 不自动关闭
-              showClose: true,
-              message: `提交错误:${ErrMsg}`,
-              type: 'error'
-            })
-          })
         } else {
           console.log('error submit!!')
           return false
         }
       })
+      return batchSaveData
+    },
+    dlgSubmit: function (e) {
+      let thisVue = this
+      var batchSaveData = this.getSubmitData()
+      if (batchSaveData) {
+        thisVue.dlgLoading = true// 弹出框加载中
+        let ArrPromiseFunc = [] // 记录异步方法
+        batchSaveData.inserted.forEach((item, index) => {
+          item.Id = item.Id + ''
+          let AddFunc = BaseApi.Add(item)
+          ArrPromiseFunc.push(AddFunc)
+        })
+        batchSaveData.updated.forEach((item, index) => {
+          let EditFunc = BaseApi.Edit(item.Id, item)
+          ArrPromiseFunc.push(EditFunc)
+        })
+        Promise.all(ArrPromiseFunc).then(ArrRes => {
+          thisVue.dlgLoading = false // 弹出框加载完毕
+          let errSome = ArrRes.filter(val => {
+            return !val.Success
+          }).map(val => {
+            return val.ErrMsg
+          })
+          if (errSome.length > 0) {
+            thisVue.$message({
+              duration: 0, // 不自动关闭
+              showClose: true,
+              message: '提交错误:' + errSome.join(';'),
+              type: 'error'
+            })
+          } else {
+            // thisVue.centerDialogVisible = false // 显示/关闭弹出框
+            this.dlgClose()
+            // 新增数据时，重新获取数据
+            if (thisVue.curr_rowdata.Id <= 0) {
+              if (thisVue.pagiNation.currentPage === 1) {
+                thisVue.tb_GetData()
+              } else {
+                thisVue.pageCurrentChange(1)
+              }
+            } else {
+              // 刷新数据
+              thisVue.tb_GetData()
+              // 更新原始数据，以便触发界面更新数据
+              // Object.assign(thisVue.curr_rowdata_Original, thisVue.curr_rowdata)
+            }
+          }
+        }).catch(ArrErr => { // 获取所有错误请求的结果
+          let ErrMsg = Array.isArray(ArrErr) ? ArrErr.map(x => { return x.ErrMsg }).join(',') : ArrErr.ErrMsg
+          thisVue.dlgLoading = false // 弹出框加载完毕
+          thisVue.$message({
+            duration: 0, // 不自动关闭
+            showClose: true,
+            message: `提交错误:${ErrMsg}`,
+            type: 'error'
+          })
+        })
+      } else {
+        return false
+      }
     }, // 弹出框提交数据
     // ----翻页控件事件
     pageSizeChange: function (pageSize) {
@@ -875,6 +906,20 @@ export default {
     dlgOK_Func: function () {
       console.log('dlgOK_Func')
     }, // 子组件触发父组件
+    SetTabActiveByName () { // 根据上次活动Tab名称-设置Tab活动
+      let row = this.curr_rowdata
+      if (this.TabActiveName) {
+        let TabActive = row[`${this.TabActiveName}_config`]
+        if (!TabActive && !isNaN(this.TabActiveName)) {
+          let tabName = this.$refs.el_Tab.panes[this.TabActiveName].name
+          TabActive = row[`${tabName}_config`]
+          this.TabActiveName = tabName
+        }
+        if (TabActive) {
+          TabActive.dlgVisible = true
+        }
+      }
+    },
     TabClick: function (tab, event) {
       // console.log('TabClick',tab);
       this.TabActiveName = tab.name
