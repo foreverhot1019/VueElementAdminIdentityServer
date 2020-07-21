@@ -227,7 +227,7 @@ import _ from 'lodash'
 let ArrField = [
   { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true, Sortable: true },
   { Name: 'Name', DisplayName: '名称', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50, ListOrder: 1, SearchOrder: 1, FormOrder: 1 },
-  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, ListOrder: 3, SearchOrder: 3, FormOrder: 3, },
+  { Name: 'DisplayName', DisplayName: '显示名称', Width_List: '200', Width_input: '278', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 200, ListOrder: 3, SearchOrder: 3, FormOrder: 3 },
   { Name: 'Description', DisplayName: '描述', Sortable: false, Editable: true, FormShow: true, ListShow: true, ListOrder: 4, SearchOrder: 4, FormOrder: 4 },
   { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },
   { Name: 'NonEditable', DisplayName: '空编辑', Type: 'boolean', Required: true, Sortable: false, SearchShow: true, FormShow: true, ListShow: true, ListOrder: 2, SearchOrder: 2, FormOrder: 2 },

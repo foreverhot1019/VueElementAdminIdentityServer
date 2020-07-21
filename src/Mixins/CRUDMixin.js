@@ -462,10 +462,14 @@ var cRUDMixin = {
       this.SetTabActiveByName() // 根据上次活动Tab名称-设置Tab活动
       // console.log('row-dblclick',row)
     }, // 双击行
+    generateNextKeyId: elementExt.generateNextKeyId, // 获取下一个主键Id
     handleAddRow: function (e) {
       let thisVue = this
       // console.log('handleAddRow',e)
-      let newRow = { Id: --this.AddNum }
+      // let newRow = { Id: --this.AddNum }
+      let newRow = { }
+      let { nextId, keyField } = this.generateNextKeyId()// 下一个主键值
+      newRow[keyField || 'Id'] = nextId || --this.addNum // 主键字段赋值
       // 赋值数据编辑新值
       thisVue.ArrTagEditField.forEach(field => {
         if (field.inputType === 'tagedit') {
@@ -626,7 +630,11 @@ var cRUDMixin = {
     getSubmitData: elementExt.getSubmitData, // 获取提交数据
     dlgSubmit: function (e) {
       let thisVue = this
-      var batchSaveData = this.getSubmitData()
+      let batchSaveData // 零时记录submit数据
+      this.$emit('ParentgetSubmitData', data => { batchSaveData = thisVue.getSubmitData(data) }) // 触发重写的数据
+      if (!batchSaveData) {
+        batchSaveData = this.getSubmitData()
+      }
       if (batchSaveData) {
         thisVue.dlgLoading = true// 弹出框加载中
         let ArrPromiseFunc = [] // 记录异步方法

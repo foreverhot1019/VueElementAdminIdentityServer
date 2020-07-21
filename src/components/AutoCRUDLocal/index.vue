@@ -162,9 +162,9 @@ export default {
       required: true
     },
     refFieldVal: { // 关联字段值
-      type: String,
-      default: 'Number',
-      required: false
+      type: [String, Number],
+      // default: 'Number',
+      required: true
     },
     tbData: { // 数据集合
       type: Array,
@@ -187,8 +187,7 @@ export default {
       required: false
     },
     Fields: { // 所有要渲染的字段
-      // eslint-disable-next-line vue/require-prop-type-constructor
-      type: Array || String,
+      type: [Array, String],
       required: true
     }
   },
@@ -373,9 +372,12 @@ export default {
     el_inputProtoType: elementExt.el_inputProtoType, // el_input-Type属性
     el_inputClass: elementExt.el_inputClass, // password 显示/隐藏 class
     pswView: elementExt.pswView, // 密码框 显示隐藏
+    generateNextKeyId: elementExt.generateNextKeyId, // 获取下一个主键Id
     handleAddRow: function (e) {
       console.log('handleAddRow', e)
-      var newRow = { Id: --this.addNum, _New: true } // 主键字段赋值
+      let { nextId, keyField } = this.generateNextKeyId()// 下一个主键值
+      var newRow = { _New: true } // 主键字段赋值
+      newRow[keyField || 'Id'] = nextId || --this.addNum
       newRow[this.refFieldName] = this.refFieldVal // 关联字段赋值
       // 赋值数据编辑新值
       this.ArrTagEditField.forEach(field => {
@@ -482,7 +484,7 @@ export default {
     }, // 批量删除选中行数据
     dlgok_func: function () {
       let thisVue = this
-      let MyForm = this.$refs['OrderCuntomerForm']
+      let MyForm = thisVue.$refs['OrderCuntomerForm']
       // MyForm.resetFields()// 重置验证
       MyForm.clearValidate()// 清除验证
       MyForm.validate(function (valid) {

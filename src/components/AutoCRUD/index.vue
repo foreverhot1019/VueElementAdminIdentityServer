@@ -173,7 +173,7 @@
                 <el-tab-pane v-bind:label="tab.DisplayName" v-bind:name="tab.Name" v-bind:key="tab.Name">
                   <AutoCRUDLocal v-bind:ref="tab.Name"
                     v-if="curr_rowdata[tab.Name+'_config'].dlgVisible"
-                    v-bind:refFieldVal="curr_rowdata.Id.toString()"
+                    v-bind:refFieldVal="curr_rowdata.Id"
                     v-bind:refFieldName="Fields[tab.Name+'Fields'].refFieldName"
                     v-model="curr_rowdata[tab.Name]"
                     v-bind:delData="curr_rowdata[tab.Name+'_config'].delData"

@@ -1,4 +1,4 @@
-import { objIsEmpty } from '@/utils'
+import { objIsEmpty, generateUUID } from '@/utils'
 import BaseApi from '@/axiosAPI/BaseApi'
 import _ from 'lodash'
 
@@ -368,7 +368,10 @@ export default {
       })
     }
   }, // 外键触发搜索
-  getSubmitData () { // 获取提交数据
+  getSubmitData (data) { // 获取提交数据
+    if (data) { // 如果父组件重写了getSubmitData方法，获取到数据后，立即返回数据
+      return data
+    }
     // 处理特殊数据格式如dictionary,带select得Array
     let thisVue = this
     let MyForm = this.$refs['MyForm']
@@ -394,5 +397,25 @@ export default {
       }
     })
     return batchSaveData
-  } // 获取提交数据
+  }, // 获取提交数据
+  generateNextKeyId () {
+    let nextId // 下一个主键值
+    let Keyfields = this.ArrFormField.filter(item => {
+      return item.IsKey
+    })
+    let keyField
+    if (Keyfields && Keyfields.length > 0) {
+      keyField = Keyfields[0]
+      let type = keyField.Type.toLowerCase()
+      if (type === 'string') {
+        nextId = generateUUID()
+      } else if (type === 'number') {
+        nextId = --this.addNum
+      }
+    }
+    if (!nextId) {
+      nextId = --this.addNum
+    }
+    return { nextId: nextId, keyField: keyField }
+  } // 获取下一个主键Id
 }

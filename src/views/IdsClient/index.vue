@@ -1,15 +1,16 @@
 <template>
     <div id="div_IdsApiSecret">
-        <AutoCRUD :ControllerName="controllerName" :Fields="Fields" :title="title" formlabel_position="top"/>
+        <AutoCRUD ref="AutoCRUD" :ControllerName="controllerName" :Fields="Fields" :title="title" formlabel_position="top" v-on:ParentgetSubmitData="getSubmitData" />
     </div>
 </template>
 <script>
 import AutoCRUD from '@/components/AutoCRUD' // AutoCRUD组件
+import _ from 'lodash'
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
 //   Name: 'Currency', //名称
 //   DisplayName: '授权币制',//显示名称
-//   IsKey: true, //主键
+//   IsKey: true, //主键v-on:
 //   Editable: true, //可编辑
 //   Required: true, //必填
 //   Type: 'string', //'datetime/number/string/boolean';//类型-默认string
@@ -35,12 +36,12 @@ import AutoCRUD from '@/components/AutoCRUD' // AutoCRUD组件
 // 渲染CRUD字段数据集
 let _ArrField = [
   { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
-  { Name: 'ClientId', DisplayName: '客户端ID', Required: true, Editable: true, FormShow: true, ListShow: true },
+  { Name: 'ClientId', DisplayName: '客户端ID', Required: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true },
   { Name: 'ClientName', DisplayName: '名称', Required: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'Enabled', DisplayName: '启用', Type: 'boolean', Required: true, Width_List: '50', Editable: true, SearchShow: true, FormShow: true, ListShow: true },
   { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
   // select选择框
-  { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedGrantTypes' },
+  // { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedGrantTypes' },
   { Name: 'AllowedScopes', DisplayName: '允许范围', Editable: true, FormShow: true, IsForeignKey: true, multiple: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedScopes' },
   { Name: 'AccessTokenType', DisplayName: '访问令牌类型', Type: 'number', Editable: true, FormShow: true, ListShow: true },
   { Name: 'ClientUri', DisplayName: 'Uri', Editable: true, FormShow: true, ListShow: true, MaxLength: 100 },
@@ -85,10 +86,17 @@ let _ArrField = [
   { Name: 'RedirectUris', DisplayName: '跳转Uri', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
   { Name: 'PostLogoutRedirectUris', DisplayName: '登出跳转Uri', Width_input: '378', inputType: 'tagedit', Editable: true, FormShow: true },
   // tab页面
+  { Name: 'AllowedGrantTypes', DisplayName: '允许发放类型', Width_input: '378', inputType: 'tabedit', Editable: true },
   { Name: 'Properties', DisplayName: '属性', Width_input: '378', inputType: 'tabedit', Editable: true },
   { Name: 'Claims', DisplayName: '票根', Width_input: '378', inputType: 'tabedit', Editable: true },
   { Name: 'ClientSecrets', DisplayName: '密钥', Width_input: '378', inputType: 'tabedit', Editable: true }
 ]
+_ArrField.AllowedGrantTypesFields = [
+  { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
+  { Name: 'GrantType', DisplayName: '发放类型', Required: true, Sortable: true, Editable: true, FormShow: true, ListShow: true, IsForeignKey: true, ForeignKeyGetListUrl: '/api/ClientManage/GetAllowedGrantTypes' },
+  { Name: 'ClientId', DisplayName: '客户端', Type: 'number', Required: true, Editable: false }
+]
+_ArrField.AllowedGrantTypesFields.refFieldName = 'ClientId' // 与主表关联字段名称
 // 必须是 字段名+Fields
 _ArrField.PropertiesFields = [
   { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
@@ -108,9 +116,9 @@ _ArrField.ClaimsFields.refFieldName = 'ClientId' // 与主表关联字段名称
 // 必须是 字段名+Fields
 _ArrField.ClientSecretsFields = [
   { Name: 'Id', DisplayName: 'Id', Type: 'number', IsKey: true },
-  { Name: 'Type', DisplayName: '类型', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 50 },
-  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, SearchShow: true, FormShow: true, ListShow: true, MaxLength: 100 },
-  { Name: 'Expiration', DisplayName: '过期时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true },
+  { Name: 'Type', DisplayName: '类型', Required: true, Sortable: true, Editable: false, FormShow: true, ListShow: true, MaxLength: 50 },
+  { Name: 'Value', DisplayName: '值', Required: true, Sortable: true, Editable: true, FormShow: true, ListShow: true, MaxLength: 101 },
+  { Name: 'Expiration', DisplayName: '过期时间', Type: 'datetime', inputType: 'datetime', Sortable: true, Editable: true, FormShow: true, ListShow: true },
   { Name: 'Created', DisplayName: '创建时间', Type: 'datetime', inputType: 'datetime', Sortable: true, SearchShow: true, FormShow: true, ListShow: true },
   { Name: 'Description', DisplayName: '描述', Editable: true, FormShow: true, ListShow: true, MaxLength: 1000 },
   { Name: 'ClientId', DisplayName: '客户端', Type: 'number', Required: true }
@@ -129,9 +137,9 @@ export default {
     }
   },
   methods: {
-    getSubmitData () { // 获取提交数据
-      let thisVue = this
-      let MyForm = this.$refs['MyForm']
+    getSubmitData (callback) { // 获取提交数据
+      let thisVue = this.$refs['AutoCRUD'] // 转换为子组件
+      let MyForm = thisVue.$refs['MyForm']
       var batchSaveData = { // 批量操作数据
         inserted: [],
         deleted: [],
@@ -141,8 +149,18 @@ export default {
       MyForm.clearValidate()// 清除验证
       MyForm.validate(function (valid) {
         if (valid) {
-          let postData = thisVue.curr_rowdata
-          postData.AllowedGrantTypes = postData.AllowedGrantTypes.split(',')
+          let postData = _.defaultsDeep({}, thisVue.curr_rowdata)
+          let AllowedGrantTypes = []
+          postData.AllowedGrantTypes.forEach((i, idx) => {
+            AllowedGrantTypes.push(i.GrantType)
+            // AllowedGrantTypes[idx] = i.GrantType
+          })
+          postData.AllowedGrantTypes = AllowedGrantTypes
+          let Properties = {}
+          postData.Properties.forEach(element => {
+            Properties[element.Key] = element.Value
+          })
+          postData.Properties = Properties
           console.log('dlgSubmit', postData)
           if (postData.Id <= 0) {
             batchSaveData.inserted.push(postData)
@@ -154,7 +172,11 @@ export default {
           return false
         }
       })
-      return batchSaveData
+      if (callback) {
+        callback(batchSaveData)
+      } else {
+        return batchSaveData
+      }
     }
   }
 }
