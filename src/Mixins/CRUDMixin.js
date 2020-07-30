@@ -219,7 +219,7 @@ var cRUDMixin = {
       // },
       Title: this.title || '', // 页面名称
       TabActiveName: '', // 选中tab名称
-      AddNum: 0, // 新增序号
+      addNum: 0, // 新增序号
       method: 'post', // HTTP请求方法
       tbLoading: true, // 加载中
       addRows: [], // 新增的行
@@ -631,9 +631,14 @@ var cRUDMixin = {
     dlgSubmit: function (e) {
       let thisVue = this
       let batchSaveData // 零时记录submit数据
-      this.$emit('ParentgetSubmitData', data => { batchSaveData = thisVue.getSubmitData(data) }) // 触发重写的数据
-      if (!batchSaveData) {
-        batchSaveData = this.getSubmitData()
+      // 触发父级组件重写的数据获取函数,可通过callback函数传递数据到子级组件
+      this.$emit('ParentgetSubmitData', data => { batchSaveData = thisVue.getSubmitData(data) })
+      // 没有父级函数ParentgetSubmitData时，再次触发本地获取一次
+      // 或验证错误，返回false，不再触发本地获取
+      if (!batchSaveData || !batchSaveData.Success) {
+        batchSaveData = thisVue.getSubmitData()
+      } else if (typeof batchSaveData.Success !== 'undefined' || batchSaveData.Success) {
+        batchSaveData = null
       }
       if (batchSaveData) {
         thisVue.dlgLoading = true// 弹出框加载中

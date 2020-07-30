@@ -1,5 +1,5 @@
 /* eslint-disable prefer-promise-reject-errors */
-import { login, logout, getInfo } from '@/axiosAPI/user'
+import { login, getInfo } from '@/axiosAPI/user' // logout,
 import { getRoutes } from '@/axiosAPI/role'
 import * as utils from '@/utils'
 import { getToken, setToken, removeToken } from '@/utils/auth'

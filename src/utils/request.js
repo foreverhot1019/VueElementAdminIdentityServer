@@ -8,6 +8,18 @@ const asiosTimeOut = 600000 // request timeout-ms
 // 默认超时时间（毫秒）
 axios.defaults.timeout = asiosTimeOut
 
+// // https代理
+// const fs = require('fs')
+// const https = require('https')
+// const httpsAgent = new https.Agent({
+//   rejectUnauthorized: false, // local verify cert
+//   cert: fs.readFileSync('client.crt'),
+//   key: fs.readFileSync('client.key'), // cert public key
+//   ca: fs.readFileSync('ca.crt'), // ca cert use to verify local cert/pfx
+//   pfx: fs.readFileSync('ca.pfx'), // pfx cert（cotains key & crt）
+//   passphrase: 'Michael' // cert password(if key/pfx has password)
+// })
+
 // create an axios instance
 const service = axios.create({
   baseURL: process.env.VUE_APP_BASE_API, // url = base url + request url
@@ -16,6 +28,10 @@ const service = axios.create({
   headers: {
     'Content-Type': 'application/x-www-form-urlencoded'
   }
+  // rejectUnauthorized: false, // local verify cert
+  // cert: fs.readFileSync('./usercert.pem'), // cert
+  // key: fs.readFileSync('./key.pem'), // cert public key
+  // passphrase: 'Michael' // cert password(if have)
 })
 
 // request interceptor
@@ -32,13 +48,16 @@ service.interceptors.request.use(
         config.data = qs.stringify(config.data)
       }
     }
-
+    // token
     if (store.getters.token) {
       // let each request carry token
       // ['X-Token'] is a custom headers key
       // please modify it according to the actual situation
       config.headers['Authorization'] = `Bearer ${getToken()}`
     }
+    // if (config.https) {
+    //   config.httpsAgent = httpsAgent
+    // }
     return config
   },
   error => {

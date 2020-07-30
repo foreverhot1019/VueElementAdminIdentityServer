@@ -12,9 +12,9 @@ export default {
     // thisVue.$set(thisVue, 'ArrTagEditField', [])
     // thisVue.$set(thisVue, 'ArrTabEditField', [])
     let ArrEnumField = thisVue.ArrEnumField // 所有外键select字段
-    let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染
-    let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染
-    let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染
+    let ArrFormField = thisVue.ArrFormField // 添加/编辑字段 通过此配置渲染,FormShow：true(默认)
+    let ArrListField = thisVue.ArrListField // table展示列 通过此配置渲染,ListShow：true(默认)
+    let ArrSearchField = thisVue.ArrSearchField // 搜索字段数据通过此配置渲染,SearchShow：false(默认)
     let ArrTagEditField = thisVue.ArrTagEditField // 所有数组编辑字段
     let ArrTabEditField = thisVue.ArrTabEditField // Tab编辑字段
     // 设置自定义列 覆盖Fields
@@ -28,26 +28,33 @@ export default {
         }
       })
     }
+    let IsFormOrder = false // form排序
+    let IsListOrder = false // 列表排序
+    let IsSearchOrder = false // 搜索排序
     if (!objIsEmpty(thisVue.Fields)) {
       // 列表/编辑/搜索 字段集合
       thisVue.Fields.forEach((item, idx) => {
-        if (item.FormShow && !item.IsKey) {
+        item.Editable = (item.Editable || item.Editable === undefined) // 编辑:默认true
+        if ((item.FormShow || item.FormShow === undefined) && !item.IsKey) {
           ArrFormField.push(item)
         }
+        item.FormOrder = item.FormOrder || 0
         if (item.FormOrder > 0) {
-          this.IsListOrder = true
+          IsFormOrder = true
         }
-        if (item.ListShow && !item.IsKey) {
+        if ((item.ListShow || item.ListShow === undefined) && !item.IsKey) {
           ArrListField.push(item)
         }
+        item.IsListOrder = item.IsListOrder || 0
         if (item.IsListOrder > 0) {
-          this.IsListOrder = true
+          IsListOrder = true
         }
         if (item.SearchShow && !item.IsKey) {
           ArrSearchField.push(item)
         }
+        item.SearchOrder = item.SearchOrder || 0
         if (item.SearchOrder > 0) {
-          this.IsSearchOrder = true
+          IsSearchOrder = true
         }
         if (item.inputType === 'tagedit') {
           ArrTagEditField.push(item)
@@ -59,6 +66,27 @@ export default {
           ArrEnumField.push(item)
         }
       })
+      if (IsFormOrder) {
+        ArrFormField = ArrFormField.sort((a, b) => {
+          let aOrder = a.FormOrder || 0
+          let bOrder = b.FormOrder || 0
+          return aOrder > bOrder
+        })
+      }
+      if (IsListOrder) {
+        ArrListField = ArrListField.sort((a, b) => {
+          let aOrder = a.ListOrder || 0
+          let bOrder = b.ListOrder || 0
+          return aOrder > bOrder
+        })
+      }
+      if (IsSearchOrder) {
+        ArrSearchField = ArrSearchField.sort((a, b) => {
+          let aOrder = a.SearchOrder || 0
+          let bOrder = b.SearchOrder || 0
+          return aOrder > bOrder
+        })
+      }
     }
     thisVue.ArrEnumField.forEach(function (item) { // 所有select枚举
       thisVue.el_remoteMethod('', item, 'search', true)
@@ -386,21 +414,23 @@ export default {
       if (valid) {
         let postData = _.defaultsDeep({}, thisVue.curr_rowdata)
         console.log('dlgSubmit', postData)
-        if (postData.Id <= 0) {
+        if (isNaN(postData.Id) && postData.Id.substr(0, 1) === '_') {
+          batchSaveData.inserted.push(postData)
+        } else if (postData.Id <= 0) {
           batchSaveData.inserted.push(postData)
         } else {
           batchSaveData.updated.push(postData)
         }
       } else {
         console.log('error submit!!')
-        return false
+        batchSaveData = false
       }
     })
     return batchSaveData
   }, // 获取提交数据
   generateNextKeyId () {
     let nextId // 下一个主键值
-    let Keyfields = this.ArrFormField.filter(item => {
+    let Keyfields = this.Fields.filter(item => {
       return item.IsKey
     })
     let keyField
@@ -408,7 +438,7 @@ export default {
       keyField = Keyfields[0]
       let type = keyField.Type.toLowerCase()
       if (type === 'string') {
-        nextId = generateUUID()
+        nextId = '_' + generateUUID()
       } else if (type === 'number') {
         nextId = --this.addNum
       }
@@ -416,6 +446,6 @@ export default {
     if (!nextId) {
       nextId = --this.addNum
     }
-    return { nextId: nextId, keyField: keyField }
+    return { nextId: nextId, keyField: keyField.Name }
   } // 获取下一个主键Id
 }
