@@ -1,5 +1,6 @@
 
 基于Vue-element-ui admin，开发的IdentityServer4 的前端管理页面，支持简单页面一键CRUD
+```
 一键CRUD 配置说明
 // 自定义列数据(覆盖BaseArrField-ArrField行值)
 // CustomerFields.Currency = {
@@ -27,6 +28,7 @@
 //   Width_List: '120', //列表-列宽度 <=0 默认*，>0 此宽度为准
 //   Width_input: '178', //Form-input宽度 <=0 默认*，>0 此宽度为准
 // }
+```
 AutoCRUD组件data.CustomerFields 有值会覆盖data.Fields数据
 tagedit：基于element-ui的tag 组件实现
 tabedit：基于element-ui的tab 组件实现
