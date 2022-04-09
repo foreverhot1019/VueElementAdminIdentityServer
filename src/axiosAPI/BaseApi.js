@@ -7,7 +7,7 @@ var MyFunc = {
   SetController: (ctrName) => {
     if (!objIsEmpty(ctrName)) {
       MyFunc.controllName = ctrName
-      MyFunc.url = `/api/${ctrName}`
+      MyFunc.url = `/${ctrName}`
     }
   },
   /**
